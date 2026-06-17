@@ -1,0 +1,1 @@
+A simple [Inkwell](https://github.com/kevboh/longform/) project with the default settings.

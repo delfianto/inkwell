@@ -1,0 +1,13 @@
+# direnv template — copy to .envrc, fill in the path, then `direnv allow`.
+# https://direnv.net
+#
+# PLUGINS_DIR points at the `plugins/` directory of an Obsidian vault you
+# want to develop against. When set, `bun run dev` (vite watch mode) writes
+# its build output directly into `$PLUGINS_DIR/inkwell/` so reloads in
+# Obsidian pick up your changes without any manual copying.
+#
+# If unset (or empty), watch mode falls back to the in-repo test vault at
+# `test-inkwell-vault/.obsidian/plugins/inkwell/`.
+#
+# Example: export PLUGINS_DIR="$HOME/Vaults/MyVault/.obsidian/plugins"
+export PLUGINS_DIR="/path/to/your/vaults/.obsidian/plugins"

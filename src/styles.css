@@ -1,0 +1,19 @@
+:root {
+  --inkwell-explorer-font-size: var(--font-ui-medium);
+  --inkwell-explorer-indent-size: 2em;
+}
+
+.inkwell-settings-user-steps {
+  padding-inline-start: 1em;
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
+.inkwell-settings-user-step-name {
+  color: var(--text-normal);
+}
+
+.inkwell-settings-user-step-id {
+  margin-left: var(--size-4-2);
+  color: var(--text-muted);
+}

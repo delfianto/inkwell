@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["DOM", "ESNext"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@model/*": ["src/model/*"],
+      "@compile/*": ["src/compile/*"],
+      "@view/*": ["src/view/*"],
+      "@commands/*": ["src/commands/*"]
+    },
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "strictPropertyInitialization": false,
+    "strictNullChecks": false,
+    "sourceMap": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.svelte", "test/**/*.ts"],
+  "exclude": ["node_modules", "test-inkwell-vault"]
+}
