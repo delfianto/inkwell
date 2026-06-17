@@ -1,0 +1,31 @@
+Inkwell
+=======
+
+Inkwell is an Obsidian plugin for long-form writing, maintained by
+Dwi Elfianto (https://github.com/delfianto).
+
+It is derived from Longform, originally created by Kevin Barrett (kevboh):
+
+    https://github.com/kevboh/longform
+
+The Longform plugin architecture, compile pipeline, sidebar UX, and much of
+the core functionality originated in that project. Inkwell has since diverged
+with a rebuilt toolchain and a revised on-disk project schema, but a
+substantial amount of the inherited code remains.
+
+Licensing
+---------
+
+  * Inkwell's own contributions are licensed under the MIT License. See LICENSE.
+
+  * Portions inherited from Longform remain under their original license,
+    "The Fuck Around and Find Out License, version 0.2", preserved verbatim in
+    LICENSE-longform.md. Copyright in those portions remains with the original
+    Longform authors.
+
+Related
+-------
+
+The community collection of compile steps referenced by Inkwell's compile API:
+
+    https://github.com/obsidian-community/longform-compile-steps

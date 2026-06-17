@@ -1,0 +1,8 @@
+.inkwell-leaf {
+  color: red;
+}
+
+.inkwell-leaf .markdown-source-view {
+  --font-text: Baskerville;
+  color: red;
+}

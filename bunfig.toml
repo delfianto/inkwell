@@ -1,0 +1,9 @@
+[install]
+cache = true
+exact = false
+
+[run]
+shell = "bun"
+
+[test]
+preload = []

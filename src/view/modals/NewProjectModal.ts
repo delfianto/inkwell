@@ -1,0 +1,94 @@
+import { App, Modal, TFolder } from "obsidian";
+import { insertProjectFrontmatter } from "src/model/project-utils";
+import { selectedProjectPath } from "src/model/stores";
+import type { Project, MultipleSceneProject, SingleSceneProject } from "src/model/types";
+import { selectedTab } from "src/view/stores";
+import NewProjectModalContent from "./NewProjectModal.svelte";
+import { mount } from "svelte";
+import { appContext } from "src/view/utils";
+
+export default class NewProjectModal extends Modal {
+  private parent: TFolder;
+
+  constructor(app: App, parent: TFolder) {
+    super(app);
+    this.parent = parent;
+  }
+
+  onOpen(): void {
+    const { contentEl } = this;
+
+    contentEl.createEl("h1", { text: "Create Project" }, (el) => {
+      el.style.margin = "0 0 var(--size-4-4) 0";
+    });
+    const entrypoint = contentEl.createDiv("inkwell-add-create-project-root");
+
+    const context = appContext(this);
+    context.set("close", () => this.close());
+    context.set(
+      "createProject",
+      async (format: "scenes" | "single", title: string, path: string) => {
+        const exists = await this.app.vault.adapter.exists(path);
+        if (exists) {
+          console.log(`[Inkwell] Cannot create project at ${path}, already exists.`);
+          return;
+        }
+
+        const parentPath = path.split("/").slice(0, -1).join("/");
+        if (!(await this.app.vault.adapter.exists(parentPath))) {
+          await this.app.vault.createFolder(parentPath);
+        }
+
+        const newProject: Project = (() => {
+          if (format === "scenes") {
+            const multi: MultipleSceneProject = {
+              format: "scenes",
+              title,
+              titleInFrontmatter: true,
+              vaultPath: path,
+              workflow: null,
+              sceneFolder: "/",
+              scenes: [],
+              ignoredFiles: [],
+              unknownFiles: [],
+              sceneTemplate: null,
+              ebook: {},
+            };
+            return multi;
+          } else {
+            const single: SingleSceneProject = {
+              format: "single",
+              title,
+              titleInFrontmatter: true,
+              vaultPath: path,
+              workflow: null,
+              ebook: {},
+            };
+            return single;
+          }
+        })();
+
+        await insertProjectFrontmatter(this.app, path, newProject);
+        selectedProjectPath.set(path);
+        selectedTab.set(format === "scenes" ? "Scenes" : "Project");
+        if (format === "single") {
+          this.app.workspace.openLinkText(path, "/", false);
+        }
+        this.close();
+      },
+    );
+
+    mount(NewProjectModalContent, {
+      target: entrypoint,
+      context,
+      props: {
+        parent: this.parent,
+      },
+    });
+  }
+
+  onClose(): void {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
+}

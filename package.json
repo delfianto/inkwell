@@ -1,0 +1,45 @@
+{
+  "name": "inkwell",
+  "version": "1.0.0",
+  "description": "Write novels, screenplays, and other long projects in Obsidian (https://obsidian.md). Derived from Longform by Kevin Barrett (kevboh).",
+  "keywords": [],
+  "license": "MIT",
+  "author": "Dwi Elfianto",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "dev": "vp build --watch",
+    "build": "vp build",
+    "check": "vp check",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "format": "vp fmt --write",
+    "type-check": "bun x tsc --noEmit && bun x svelte-check --tsconfig tsconfig.json",
+    "test": "vp test run",
+    "test:coverage": "vp test run --coverage"
+  },
+  "dependencies": {
+    "@popperjs/core": "^2.11.2",
+    "lodash": "^4.17.21",
+    "sortablejs": "^1.15.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@types/lodash": "^4.17.0",
+    "@types/node": "^22.0.0",
+    "@types/sortablejs": "^1.15.0",
+    "@voidzero-dev/vite-plus-core": "latest",
+    "builtin-modules": "3.3.0",
+    "obsidian": "latest",
+    "svelte": "^5.0.0",
+    "svelte-check": "^4.0.0",
+    "tslib": "^2.8.0",
+    "typescript": "^5.7.0",
+    "vite-plus": "latest",
+    "vitest": "latest"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+  }
+}

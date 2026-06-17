@@ -1,0 +1,10 @@
+{
+  "id": "inkwell",
+  "name": "Inkwell",
+  "version": "1.0.0",
+  "minAppVersion": "1.0",
+  "description": "Write novels, screenplays, and other long projects in Obsidian. Modernized stack (Svelte 5, Vite, Bun), flat frontmatter schema, and first-class eBook metadata.",
+  "author": "Dwi Elfianto",
+  "authorUrl": "https://github.com/delfianto",
+  "isDesktopOnly": false
+}

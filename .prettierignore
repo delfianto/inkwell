@@ -1,0 +1,22 @@
+# Build outputs
+dist
+main.js
+*.js.map
+
+# Dependencies
+node_modules
+
+# Coverage
+coverage
+
+# Markdown is treated separately (docs hand-formatted)
+*.md
+
+# Test vault (frontmatter and content managed by the plugin at runtime)
+test-inkwell-vault
+
+# Local agent state
+.claude
+
+# Obsidian plugin data
+data.json
