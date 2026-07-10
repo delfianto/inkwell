@@ -78,8 +78,6 @@ Each nested array level in `scenes:` becomes one `> ` token. Save the file and t
 
 If you're coming from Longform, also move its data folder, which Inkwell relocated from `<vault>/.obsidian/longform/` to `<vault>/.obsidian/inkwell/` — move your `workflows.json` and any user compile-step scripts there.
 
-See [docs/INDEX_FILE.md](./docs/INDEX_FILE.md) for the full schema and [docs/MULTIPLE_SCENE_PROJECTS.md](./docs/MULTIPLE_SCENE_PROJECTS.md) for the hierarchy details.
-
 ## Installing
 
 Not in the Community Plugins store. Two ways to install:
@@ -102,7 +100,7 @@ BRAT pulls the release assets into `.obsidian/plugins/inkwell/`, enables the plu
 
 ## Getting started
 
-UI flows for creating, reordering, and compiling projects are inherited from Longform. Refer to upstream's [README](https://github.com/kevboh/longform/blob/main/README.md) for the visual walkthrough. The main practical difference is the on-disk `Index.md` schema, covered above and in [docs/INDEX_FILE.md](./docs/INDEX_FILE.md).
+UI flows for creating, reordering, and compiling projects are inherited from Longform. Refer to upstream's [README](https://github.com/kevboh/longform/blob/main/README.md) for the visual walkthrough. The main practical difference is the on-disk `Index.md` schema, covered above.
 
 ## Stack
 
