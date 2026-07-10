@@ -1,7 +1,6 @@
 import type { App, PaneType } from "obsidian";
 
 import { get } from "svelte/store";
-import { repeat } from "lodash";
 
 import type { CommandBuilder } from "./types";
 import { activeFile, selectedTab } from "src/view/stores";
@@ -142,7 +141,7 @@ export const jumpToScene: CommandBuilder = (plugin) => ({
 
     const scenesToTitles: Map<string, string> = new Map();
     current.scenes.forEach((s) => {
-      scenesToTitles.set(`${repeat("\t", s.indent)}${s.title}`, s.title);
+      scenesToTitles.set(`${"\t".repeat(s.indent)}${s.title}`, s.title);
     });
 
     new JumpModal(

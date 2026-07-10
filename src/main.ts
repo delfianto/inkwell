@@ -1,8 +1,6 @@
 import "./styles.css";
 
 import { Plugin, WorkspaceLeaf, FileView, addIcon, TAbstractFile, TFolder } from "obsidian";
-import once from "lodash/once";
-import pick from "lodash/pick";
 import type { Unsubscriber } from "svelte/store";
 import { get } from "svelte/store";
 
@@ -14,6 +12,7 @@ import {
 } from "./model/types";
 import { DEFAULT_SETTINGS, TRACKED_SETTINGS_PATHS } from "./model/types";
 import { activeFile, selectedTab } from "./view/stores";
+import { once } from "./lib/fn";
 import { ICON_NAME, ICON_SVG } from "./view/icon";
 import { LeafStyler } from "./view/leaf-styler";
 import { InkwellSettingsTab } from "./view/settings/InkwellSettings";
@@ -129,9 +128,8 @@ export default class InkwellPlugin extends Plugin {
   async loadSettings(): Promise<void> {
     const settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
-    const _pluginSettings: InkwellPluginSettings = pick(
-      settings,
-      TRACKED_SETTINGS_PATHS,
+    const _pluginSettings = Object.fromEntries(
+      TRACKED_SETTINGS_PATHS.filter((key) => key in settings).map((key) => [key, settings[key]]),
     ) as InkwellPluginSettings;
     pluginSettings.set(_pluginSettings);
     selectedProjectPath.set(_pluginSettings.selectedProjectPath);

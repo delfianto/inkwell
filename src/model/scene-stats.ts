@@ -1,4 +1,3 @@
-import { sum } from "lodash";
 import type { TFile } from "obsidian";
 
 import { fileNameFromPath } from "src/lib/path";
@@ -20,7 +19,11 @@ export function statsForScene(
   }
 
   const projectTotal =
-    typeof count === "number" ? count : typeof count === "object" ? sum(Object.values(count)) : 0;
+    typeof count === "number"
+      ? count
+      : typeof count === "object"
+        ? Object.values(count as Record<string, number>).reduce((total, n) => total + n, 0)
+        : 0;
 
   if (project.format === "single") {
     return { scene: projectTotal, project: projectTotal };

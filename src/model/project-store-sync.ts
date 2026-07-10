@@ -7,8 +7,9 @@ import {
   type MetadataCache,
   type Vault,
 } from "obsidian";
-import { cloneDeep, isEqual, sortBy } from "lodash";
 import { get, type Unsubscriber } from "svelte/store";
+
+import { deepEqual } from "src/lib/deep-equal";
 
 import { EBOOK_STRING_KEYS, type EbookMetadata, type Project } from "./types";
 import { projects as projectsStore, selectedProjectPath, updateScenesProject } from "./stores";
@@ -106,7 +107,7 @@ export class ProjectStoreSync {
 
     const projectsToWrite = loadedProjects.map((d) => d.project);
 
-    this.lastKnownProjectsByPath = cloneDeep(
+    this.lastKnownProjectsByPath = structuredClone(
       projectsToWrite.reduce((acc: Record<string, Project>, p) => {
         acc[p.vaultPath] = p;
         return acc;
@@ -136,7 +137,9 @@ export class ProjectStoreSync {
     const stillExists = currentPath !== null && projects.some((p) => p.vaultPath === currentPath);
     if (stillExists) return;
     // Sort by title so the auto-pick matches the picker's alphabetical order.
-    const first = sortBy(projects, (p) => p.title)[0];
+    const first = [...projects].sort((a, b) =>
+      a.title < b.title ? -1 : a.title > b.title ? 1 : 0,
+    )[0];
     selectedProjectPath.set(first.vaultPath);
   }
 
@@ -157,7 +160,7 @@ export class ProjectStoreSync {
     const { project } = result;
 
     const old = this.lastKnownProjectsByPath[project.vaultPath];
-    if (!old || !isEqual(project, old)) {
+    if (!old || !deepEqual(project, old)) {
       this.lastKnownProjectsByPath[project.vaultPath] = project;
       projectsStore.update((ps) => {
         const idx = ps.findIndex((p) => p.vaultPath === project.vaultPath);
@@ -252,7 +255,7 @@ export class ProjectStoreSync {
   private removeProjectByPath(path: string): boolean {
     const ps = get(projectsStore);
     if (!ps.some((p) => p.vaultPath === path)) return false;
-    const remaining = cloneDeep(ps).filter((p) => p.vaultPath !== path);
+    const remaining = structuredClone(ps).filter((p) => p.vaultPath !== path);
     projectsStore.set(remaining);
     if (get(selectedProjectPath) === path) {
       selectedProjectPath.set(remaining.length > 0 ? remaining[0].vaultPath : null);
@@ -300,13 +303,13 @@ export class ProjectStoreSync {
   async projectsStoreChanged(newValue: Project[]) {
     for (const project of newValue) {
       const old = this.lastKnownProjectsByPath[project.vaultPath];
-      if (!old || !isEqual(project, old)) {
+      if (!old || !deepEqual(project, old)) {
         this.pathsToIgnoreNextChange.add(project.vaultPath);
         await this.writeProjectFrontmatter(project);
       }
     }
 
-    this.lastKnownProjectsByPath = cloneDeep(
+    this.lastKnownProjectsByPath = structuredClone(
       newValue.reduce((acc: Record<string, Project>, p) => {
         acc[p.vaultPath] = p;
         return acc;

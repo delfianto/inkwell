@@ -19,27 +19,24 @@
     "test:coverage": "vp test run --coverage"
   },
   "dependencies": {
-    "@popperjs/core": "^2.11.2",
-    "lodash": "^4.17.21",
-    "sortablejs": "^1.15.0"
+    "@popperjs/core": "^2.11.8",
+    "sortablejs": "^1.15.7"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^5.0.0",
-    "@types/lodash": "^4.17.0",
-    "@types/node": "^22.0.0",
-    "@types/sortablejs": "^1.15.0",
-    "@voidzero-dev/vite-plus-core": "latest",
-    "builtin-modules": "3.3.0",
-    "obsidian": "latest",
-    "svelte": "^5.0.0",
-    "svelte-check": "^4.0.0",
-    "tslib": "^2.8.0",
-    "typescript": "^5.7.0",
-    "vite-plus": "latest",
-    "vitest": "latest"
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "@types/node": "^26.1.1",
+    "@types/sortablejs": "^1.15.9",
+    "@voidzero-dev/vite-plus-core": "^0.2.4",
+    "builtin-modules": "^5.3.0",
+    "obsidian": "^1.13.1",
+    "svelte": "^5.56.4",
+    "svelte-check": "^4.7.2",
+    "tslib": "^2.8.1",
+    "typescript": "^6.0.3",
+    "vite-plus": "^0.2.4",
+    "vitest": "4.1.10"
   },
   "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+    "vite": "npm:@voidzero-dev/vite-plus-core@^0.2.4"
   }
 }

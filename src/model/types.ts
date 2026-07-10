@@ -1,5 +1,4 @@
 export const INKWELL_CURRENT_PLUGIN_DATA_VERSION = 3;
-export const INKWELL_CURRENT_INDEX_VERSION = 2;
 
 export type IndentedScene = {
   title: string;

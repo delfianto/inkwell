@@ -1,5 +1,4 @@
-import debounce from "lodash/debounce";
-import { normalizePath, type App } from "obsidian";
+import { debounce, normalizePath, type App } from "obsidian";
 import { get, type Unsubscriber } from "svelte/store";
 
 import { DEFAULT_WORKFLOWS } from "src/compile";
@@ -51,7 +50,7 @@ export class WorkflowStorage {
    * 3-second debounce. Returns the unsubscriber for the caller's cleanup.
    */
   watch(): Unsubscriber {
-    const debouncedSave = debounce(() => this.save(), 3000);
+    const debouncedSave = debounce(() => this.save(), 3000, true);
     return workflows.subscribe(() => {
       if (!get(initialized)) return;
       debouncedSave();
