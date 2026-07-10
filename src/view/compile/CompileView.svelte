@@ -359,8 +359,7 @@
         <strong>Manuscript</strong> steps run once on the joined manuscript.
       </li>
       <li>
-        Drag to rearrange. <a href="https://github.com/delfianto/inkwell/blob/main/docs/COMPILE.md">Documentation here.</a
-      >
+        Drag to rearrange.
       </li>
     </ul>
 
