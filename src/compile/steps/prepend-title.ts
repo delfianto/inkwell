@@ -1,4 +1,3 @@
-import { repeat } from "lodash";
 import { formatSceneNumber } from "src/model/project-utils";
 import type { CompileInput, CompileSceneInput } from "..";
 import type { CompileContext } from "./abstract-compile-step";
@@ -39,7 +38,7 @@ export const PrependTitleStep = makeBuiltinStep({
       const match = format.match(regex);
       if (match) {
         const toRepeat = match["groups"]["torepeat"] ?? "";
-        title = title.replace(regex, repeat(toRepeat, (sceneInput.indentationLevel ?? -1) + 1));
+        title = title.replace(regex, toRepeat.repeat((sceneInput.indentationLevel ?? -1) + 1));
       }
       title = title.replace("$1", sceneInput.name);
       if (sceneInput.numbering) {

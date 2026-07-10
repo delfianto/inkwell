@@ -1,5 +1,4 @@
 <script module lang="ts">
-  import { toInteger } from "lodash";
 
   function IndentPlugin() {
     let initialIndent = 0;
@@ -17,7 +16,7 @@
     Indent.prototype = {
       dragStart(e: any) {
         initialX = e.originalEvent.x;
-        initialIndent = toInteger(e.dragEl.dataset["indent"]);
+        initialIndent = Number.parseInt(e.dragEl.dataset["indent"] ?? "", 10) || 0;
         currentIndent = initialIndent;
         dragID = e.dragEl.dataset["id"];
       },

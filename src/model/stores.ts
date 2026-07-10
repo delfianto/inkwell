@@ -1,5 +1,4 @@
 import { derived, writable } from "svelte/store";
-import { sortBy } from "lodash";
 
 import type {
   InkwellPluginSettings,
@@ -29,7 +28,9 @@ export const waitingForSync = writable<boolean>(false);
 
 /** All projects indexed by title (one project per title). */
 export const projectsByTitle = derived([projects], ([$projects]) => {
-  const sorted = sortBy($projects, (p) => p.title);
+  const sorted = [...$projects].sort((a, b) =>
+    a.title < b.title ? -1 : a.title > b.title ? 1 : 0,
+  );
   const result: Record<string, Project> = {};
   for (const p of sorted) {
     result[p.title] = p;

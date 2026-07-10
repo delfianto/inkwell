@@ -1,6 +1,6 @@
 # Compile
 
-Inkwell's Compile tab helps you turn a project into a final document. In the tab, you build **workflows** comprising **steps**. You can also write your own **user scripts** in JavaScript to build out fully custom compilation processes; hopefully, though, the built-in steps are sufficient for most use cases. If not, and you'd like to suggest a new step that you think should be included by default, please [suggest it as a GitHub issue](https://github.com/kevboh/longform/issues).
+Inkwell's Compile tab helps you turn a project into a final document. In the tab, you build **workflows** comprising **steps**. You can also write your own **user scripts** in JavaScript to build out fully custom compilation processes; hopefully, though, the built-in steps are sufficient for most use cases. If not, and you'd like to suggest a new step that you think should be included by default, please [suggest it as a GitHub issue](https://github.com/delfianto/inkwell/issues).
 
 ## Steps
 
@@ -124,11 +124,12 @@ compile = (input, context) => {
         kind: string; // "Scene" | "Join" | "Manuscript"
         optionValues: { [id: string]: unknown } // Map of option IDs to values
         projectPath: string; // path in vault to compiling project
-        draft: Draft; // The Draft type describing your project
+        project: Project; // The Project describing what's being compiled
         app: App; // Obsidian app
+        utilities: { normalizePath: (path: string) => string }; // Convenience helpers
       }
     @note For an example of using `context` to determine the shape of `input`, see
-    https://github.com/kevboh/longform/blob/main/src/compile/steps/strip-frontmatter.ts
+    https://github.com/delfianto/inkwell/blob/main/src/compile/steps/strip-frontmatter.ts
     @returns If of kind "Scene" or "Manuscript", the same shape as `input`
     with the appropriate changes made to `contents`. If of kind "Join",
     the same shape as a "Manuscript" step input.
@@ -197,4 +198,4 @@ You can drag steps within a workflow to rearrange them.
 
 ## The Future
 
-Compile remains a feature that will change over time. [Open issues](https://github.com/kevboh/longform/issues?q=is%3Aissue+is%3Aopen+label%3Acompile) are a good way to track what's on the roadmap. I plan on adding more steps and a few more features that allow you to fully customize what happens inside a given workflow. As always, if you think a step should be added or changed, or that compile should behave differently, please open an issue in GitHub.
+Compile remains a feature that will change over time. [Open issues](https://github.com/delfianto/inkwell/issues?q=is%3Aissue+is%3Aopen+label%3Acompile) are a good way to track what's on the roadmap. I plan on adding more steps and a few more features that allow you to fully customize what happens inside a given workflow. As always, if you think a step should be added or changed, or that compile should behave differently, please open an issue in GitHub.

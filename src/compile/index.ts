@@ -10,11 +10,6 @@ import {
 } from "./steps/abstract-compile-step";
 export * from "./steps/abstract-compile-step";
 
-export interface CompileOptions {
-  includeHeaders: boolean;
-  reportProgress: (status: string, complete: boolean) => void;
-}
-
 export interface CompileStatusError {
   kind: "CompileStatusError";
   error: string;

@@ -1,5 +1,4 @@
-import debounce from "lodash/debounce";
-import type { Vault, TAbstractFile } from "obsidian";
+import { debounce, type Vault, type TAbstractFile } from "obsidian";
 import type { CompileStep, Workflow } from "src/compile";
 import { CompileStepKind, CompileStepOptionType, makeBuiltinStep } from "src/compile";
 import { userScriptSteps, workflows } from "src/model/stores";
@@ -19,10 +18,14 @@ export class UserScriptObserver {
 
   constructor(vault: Vault) {
     this.vault = vault;
-    this.onScriptModify = debounce(() => {
-      console.log(`[Inkwell] File in user script folder modified, reloading scripts…`);
-      this.loadUserSteps();
-    }, DEBOUNCE_SCRIPT_LOAD_DELAY_MS);
+    this.onScriptModify = debounce(
+      () => {
+        console.log(`[Inkwell] File in user script folder modified, reloading scripts…`);
+        this.loadUserSteps();
+      },
+      DEBOUNCE_SCRIPT_LOAD_DELAY_MS,
+      true,
+    );
   }
 
   private get folder(): string {

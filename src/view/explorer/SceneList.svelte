@@ -13,7 +13,6 @@
   import Disclosure from "../components/Disclosure.svelte";
   import { formatSceneNumber, numberScenes } from "src/model/project-utils";
   import type { UndoManager } from "src/view/undo-manager";
-  import { cloneDeep } from "lodash";
   import { scenePath } from "src/model/scene-navigation";
   import { selectElementContents, useApp } from "../utils";
   import { addAll, addScene, ignoreAll, ignoreScene } from "./scene-menu-items";
@@ -149,7 +148,7 @@
       sceneHistory = [
         {
           projectVaultPath: $projects[currentProjectIndex].vaultPath,
-          scenes: cloneDeep(scenes),
+          scenes: structuredClone(scenes),
         },
         ...sceneHistory,
       ].slice(0, 20);
@@ -330,7 +329,7 @@
       sceneHistory = [
         {
           projectVaultPath: project.vaultPath,
-          scenes: cloneDeep((project as MultipleSceneProject).scenes),
+          scenes: structuredClone((project as MultipleSceneProject).scenes),
         },
       ];
       undoIndex = 0;

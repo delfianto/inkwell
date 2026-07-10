@@ -1,8 +1,7 @@
-import { last } from "lodash";
 import { normalizePath, type Vault } from "obsidian";
 
 export function fileNameFromPath(path: string): string {
-  return last(path.split("/")).split(".md")[0];
+  return (path.split("/").at(-1) ?? "").split(".md")[0];
 }
 
 /**

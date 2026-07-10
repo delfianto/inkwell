@@ -151,7 +151,7 @@ export interface CompileStep {
     @param input See `CompileInput`
     @param context See `CompileContext`
     @note For an example of using `context` to determine the shape of `input`, see
-    https://github.com/kevboh/longform/blob/main/src/compile/steps/strip-frontmatter.ts
+    https://github.com/delfianto/inkwell/blob/main/src/compile/steps/strip-frontmatter.ts
     @returns If of kind "Scene" or "Manuscript", the same shape as `input`
     with the appropriate changes made to `contents`. If of kind "Join",
     the same shape as a "Manuscript" step input.
