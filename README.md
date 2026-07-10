@@ -7,14 +7,14 @@ Inkwell began as a personal fork of [kevboh/longform](https://github.com/kevboh/
 - make `Index.md` frontmatter safe to round-trip through Obsidian's Properties UI without nuking your project, and
 - treat eBook / Dublin Core metadata as a first-class part of the project — no separate sidecar files.
 
-This is a personal project: built to scratch my own writing setup. PRs welcome, but there's no roadmap, no support promises, and no guarantee of stability across releases.
+This is a personal project, built to scratch my own writing setup and maintained for an audience of one. You're welcome to use it as-is, but I'm not accepting feature requests or PRs, and there's no roadmap, no support promises, and no guarantee of stability across releases.
 
 > [!CAUTION]
 > Inkwell uses an `Index.md` frontmatter schema that is **incompatible** with upstream Longform's. There is **no automated migration**. Projects authored against upstream Longform need a one-time hand-edit. See [Migrating](#migrating) below.
 
 ## What it is
 
-- Modernized stack: [Bun](https://bun.com), [Vite+](https://voidzero.dev) (alpha) as a unified toolchain, Svelte 5 (runes), TypeScript 5.7+.
+- Modernized stack: [Bun](https://bun.com), [Vite+](https://voidzero.dev) (alpha) as a unified toolchain, Svelte 5 (runes), TypeScript 6. Zero runtime dependencies beyond Popper and SortableJS (lodash was dropped in favor of native JS).
 - **Flat frontmatter schema** — every project key lives at the top level of `Index.md` so Obsidian's Properties UI can edit it without flattening or losing structure.
 - **eBook metadata first-class** — `author`, `language`, `identifier`, `description`, `cover`, `publisher`, `pubdate`, `rights`, `subjects`, `series`, `seriesIndex` live alongside `title` / `workflow` / `scenes`. An EPUB-producing compile step can read them directly; no sidecar file.
 - **Scene display labels** — the Scenes tab uses each scene file's `frontmatter.title` as its row label (live-updating), falling back to the filename. Lets you name files concisely (`ch01-s02.md`) while displaying a friendlier title.
@@ -109,9 +109,11 @@ UI flows for creating, reordering, and compiling projects are inherited from Lon
 | Runtime / package manager | [Bun](https://bun.com) |
 | Build / lint / format / test / type-aware lint | [Vite+](https://voidzero.dev) (alpha) — `vp build`, `vp test`, `vp check`, `vp lint`, `vp fmt` |
 | UI framework | Svelte 5 (runes mode) |
-| Type-checking | `tsc --noEmit` + `svelte-check` (kept until Vite+ adds Svelte type-check coverage) |
+| Type-checking | `tsc --noEmit` (TypeScript 6.x) + `svelte-check` (kept until Vite+ adds Svelte type-check coverage) |
 
-Standalone `vite` and `vitest` are not declared as devDependencies — they resolve to Vite+'s vendored versions via `package.json` `overrides`.
+`vite` isn't declared as a devDependency — it resolves to Vite+'s vendored build via a `package.json` `override`. `vitest` (`4.1.10`) is a normal devDependency, pinned to the version Vite+ bundles.
+
+Type-checking stays on the TypeScript **6.x** line: TypeScript 7 is the Go rewrite and no longer exposes the JS compiler API that `svelte-check` (and most editor tooling) relies on, so it can't type-check `.svelte` files yet. Inkwell will move to native TS7 once `svelte-check` supports it.
 
 ## Development
 
@@ -135,7 +137,7 @@ Inkwell attaches the `.inkwell-leaf` CSS class to any pane editing a scene or in
 ## Troubleshooting
 
 > [!IMPORTANT]
-> **Inkwell never alters the contents of your scene notes.** The only file it rewrites is each project's `Index.md`. Scene files are read-only from the plugin's perspective. (The optional `writeProperty` setting can also add `inkwell-order` / `inkwell-number` to scene files; that's the only exception, and it's opt-in.)
+> **Inkwell never alters the contents of your scene notes.** The only file it rewrites is each project's `Index.md`. Scene files are read-only from the plugin's perspective.
 
 If a project disappears from the sidebar after you edit its `Index.md`, the frontmatter no longer matches the schema — most often a missing top-level `inkwell: scenes` (or `single`). Either fix it by hand or restart Obsidian. Inkwell recomputes projects from frontmatter on each load and never deletes files based on frontmatter state.
 
