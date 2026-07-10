@@ -196,7 +196,7 @@ export default class InkwellPlugin extends Plugin {
     if (this.app.workspace.getLeavesOfType(VIEW_TYPE_INKWELL_EXPLORER).length) {
       return;
     }
-    this.app.workspace.getLeftLeaf(false).setViewState({
+    this.app.workspace.getRightLeaf(false).setViewState({
       type: VIEW_TYPE_INKWELL_EXPLORER,
     });
   }

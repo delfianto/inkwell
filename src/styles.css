@@ -3,6 +3,27 @@
   --inkwell-explorer-indent-size: 2em;
 }
 
+/* Ensure the add-step modal frame never scrolls — only .modal-content does.
+   Some Obsidian versions put overflow:auto on .modal itself, which causes the
+   absolutely-positioned close button to scroll away with the content. */
+.modal.inkwell-add-step-modal {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 90vw);
+  max-height: 85vh;
+}
+
+.modal.inkwell-add-step-modal .modal-close-button {
+  position: absolute;
+}
+
+.modal.inkwell-add-step-modal .modal-content {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
 .inkwell-settings-user-steps {
   padding-inline-start: 1em;
   margin-block-start: 0;

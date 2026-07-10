@@ -73,7 +73,7 @@
     width: 100%;
     height: 100%;
     font-family: inherit;
-    font-size: var(--font-ui-large);
+    font-size: inherit;
     cursor: inherit;
     line-height: inherit;
     outline: none;

@@ -22,6 +22,7 @@
   import CompileStepView from "./CompileStepView.svelte";
   import SortableList from "../sortable/SortableList.svelte";
   import AutoTextArea from "../components/AutoTextArea.svelte";
+  import Icon from "../components/Icon.svelte";
   import type { Project } from "src/model/types";
 
   let workflowContextButton: HTMLElement = $state(null);
@@ -252,6 +253,7 @@
         {#if workflowInputState !== "hidden"}
           <input
             type="text"
+            class="inkwell-workflow-name-input"
             placeholder={workflowInputState == "new"
               ? "New Workflow…"
               : "My Cool Workflow"}
@@ -270,23 +272,23 @@
           />
         {:else}
           {#if allWorkflowNames.length == 0}
-            <span class="inkwell-hint">Create a new workflow to begin →</span>
+            <span class="inkwell-hint">No workflows yet — create one with ⋮</span>
           {:else}
-            <div class="select">
-              <select
-                id="inkwell-workflows"
-                value={$selectedProject.workflow}
-                onchange={selectedWorkflow}
-              >
-                {#each allWorkflowNames as workflowOption}
-                  <option value={workflowOption}>{workflowOption}</option>
-                {/each}
-              </select>
-            </div>
+            <select
+              id="inkwell-workflows"
+              class="dropdown"
+              value={$selectedProject.workflow}
+              onchange={selectedWorkflow}
+            >
+              {#each allWorkflowNames as workflowOption}
+                <option value={workflowOption}>{workflowOption}</option>
+              {/each}
+            </select>
           {/if}
           <button
             class="options-button"
-            title="Workflow Actions"
+            title="Workflow options"
+            aria-label="Workflow options"
             bind:this={workflowContextButton}
             onclick={() => {
               const rect = workflowContextButton.getBoundingClientRect();
@@ -296,8 +298,10 @@
                 currentWorkflowName,
                 workflowAction
               );
-            }}>▼</button
+            }}
           >
+            <Icon iconName="more-vertical" />
+          </button>
         {/if}
       </div>
       {#if $workflows[currentWorkflowName]}
@@ -386,47 +390,28 @@
     flex-direction: column;
   }
 
-  #inkwell-workflows {
-    color: var(--color-accent-2);
-  }
-
   .inkwell-workflow-picker {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
+    gap: var(--size-4-2);
     margin-bottom: var(--size-4-2);
   }
 
+  .inkwell-workflow-picker select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .inkwell-workflow-picker .inkwell-workflow-name-input {
+    flex: 1;
+    min-width: 0;
+  }
+
   .inkwell-workflow-picker .inkwell-hint {
-    font-size: 1em;
-  }
-
-  select {
-    background-color: transparent;
-    border: none;
-    padding: var(--size-4-1) 0;
-    margin: 0;
-    font-family: inherit;
-    font-size: inherit;
-    cursor: inherit;
-    line-height: inherit;
-    outline: none;
-    box-shadow: none;
-  }
-
-  .select {
-    cursor: pointer;
-  }
-
-  .select > select {
-    color: var(--text-accent);
-  }
-
-  .select > select:hover {
-    text-decoration: underline;
-    color: var(--text-accent-hover);
+    flex: 1;
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
   }
 
   .inkwell-compile-container :global(.inkwell-sortable-step-list) {
@@ -436,24 +421,34 @@
   }
 
   .options-button {
-    background-color: var(--background-secondary-alt);
-    color: var(--text-accent);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-4-6);
+    height: var(--size-4-6);
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: var(--text-muted);
+    border-radius: var(--radius-s);
+    cursor: pointer;
   }
 
   .options-button:hover {
-    background-color: var(--background-primary);
-    color: var(--text-accent-hover);
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
   }
 
   .add-step-container {
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
+    padding: var(--size-4-2) var(--size-4-2) 0;
   }
 
   .add-step-container button {
-    font-weight: bold;
+    font-size: var(--font-ui-smaller);
+    font-weight: 600;
     color: var(--text-accent);
   }
 
@@ -464,12 +459,14 @@
 
   .inkwell-compile-instructions {
     font-size: var(--font-smallest);
-    padding: var(--size-4-4) var(--size-4-4) var(--size-4-1) var(--size-4-8);
+    padding: var(--size-4-2) var(--size-4-4) var(--size-4-2) var(--size-4-4);
+    margin-top: var(--size-4-2);
     color: var(--text-muted);
+    border-top: var(--border-width) solid var(--background-modifier-border);
   }
 
   .inkwell-compile-instructions li {
-    margin-bottom: var(--size-4-1)
+    margin-bottom: var(--size-4-1);
   }
 
   .inkwell-compile-instructions strong {
@@ -497,7 +494,9 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    margin-top: var(--size-4-8);
+    padding: var(--size-4-2);
+    margin-top: var(--size-4-2);
+    border-top: var(--border-width) solid var(--background-modifier-border);
   }
 
   .inkwell-compile-run-container .compile-status {
