@@ -8,6 +8,7 @@
     formatStepKind,
     PLACEHOLDER_MISSING_STEP,
   } from "src/compile/steps/abstract-compile-step";
+  import Icon from "../components/Icon.svelte";
 
   let {
     step,
@@ -34,9 +35,9 @@
       <div class="inkwell-compile-step-title-container">
         <h4>Invalid Step</h4>
       </div>
-      <button class="inkwell-remove-step-button" onclick={removeStep}
-        >X</button
-      >
+      <button class="inkwell-remove-step-button" onclick={removeStep} aria-label="Remove step">
+        <Icon iconName="x" />
+      </button>
     </div>
     <div class="inkwell-compile-step-error-container">
       <p class="inkwell-compile-step-error">
@@ -58,9 +59,9 @@
           </div>
         {/if}
       </div>
-      <button class="inkwell-remove-step-button" onclick={removeStep}
-        >X</button
-      >
+      <button class="inkwell-remove-step-button" onclick={removeStep} aria-label="Remove step">
+        <Icon iconName="x" />
+      </button>
     </div>
     <p class="inkwell-compile-step-description">
       {step.description.description}
@@ -124,7 +125,8 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
+    padding: var(--size-4-1) var(--size-4-1) var(--size-4-1) var(--size-4-2);
   }
 
   .inkwell-compile-step-title-container {
@@ -139,6 +141,8 @@
     display: inline-block;
     margin: var(--size-4-1) var(--size-4-2) var(--size-4-1) 0;
     padding: 0;
+    font-size: inherit;
+    font-weight: 600;
   }
 
   .inkwell-compile-step-title-container .inkwell-step-kind-pill {
@@ -159,18 +163,29 @@
     color: var(--text-faint);
     display: inline-block;
     width: var(--size-4-6);
-    padding-left: var(--size-4-1);
+    text-align: center;
   }
 
   .inkwell-remove-step-button {
+    flex-shrink: 0;
     display: flex;
-    width: var(--size-4-5);
-    height: 100%;
-    margin: 1px;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    background: var(--background-modifier-error);
+    width: var(--size-4-6);
+    height: var(--size-4-6);
+    padding: 0;
+    margin: 0 var(--size-4-1) 0 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: var(--text-faint);
+    border-radius: var(--radius-s);
+    cursor: pointer;
+  }
+
+  .inkwell-remove-step-button:hover {
+    color: var(--text-error);
+    background: transparent;
   }
 
   .inkwell-compile-step p {
@@ -181,7 +196,7 @@
   .inkwell-compile-step-description {
     font-size: var(--font-smallest);
     color: var(--text-muted);
-    padding: var(--size-4-2) var(--size-4-1) var(--size-4-2) var(--size-4-6);
+    padding: var(--size-4-2) var(--size-4-2) var(--size-4-2) calc(var(--size-4-2) + var(--size-4-6));
   }
 
   .inkwell-compile-step-options {
@@ -190,7 +205,7 @@
   }
 
   .inkwell-compile-step-options > div {
-    margin: 0 var(--size-4-2) 0 var(--size-4-6)
+    margin: 0 var(--size-4-2) 0 calc(var(--size-4-2) + var(--size-4-6));
   }
 
   .inkwell-compile-step-option {

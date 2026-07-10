@@ -18,9 +18,7 @@ export default class NewProjectModal extends Modal {
   onOpen(): void {
     const { contentEl } = this;
 
-    contentEl.createEl("h1", { text: "Create Project" }, (el) => {
-      el.style.margin = "0 0 var(--size-4-4) 0";
-    });
+    this.setTitle("Create Project");
     const entrypoint = contentEl.createDiv("inkwell-add-create-project-root");
 
     const context = appContext(this);

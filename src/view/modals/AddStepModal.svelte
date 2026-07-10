@@ -98,9 +98,13 @@
 </div>
 
 <style>
+  .inkwell-add-step-modal-contents {
+    padding-right: var(--size-4-4);
+  }
+
   .inkwell-steps-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: var(--size-4-4);
     grid-auto-rows: auto;
   }

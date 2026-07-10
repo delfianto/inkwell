@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Platform } from "obsidian";
   import CompileView from "../compile/CompileView.svelte";
 
   import { selectedProject } from "src/model/stores";
@@ -20,6 +21,12 @@
       $selectedTab = "Project";
     }
   });
+
+  $effect(() => {
+    if (Platform.isMobile && $selectedTab === "Compile") {
+      $selectedTab = "Project";
+    }
+  });
 </script>
 
 {#if $waitingForSync}
@@ -38,7 +45,9 @@
           <div class="tab-list">
             <Tab tab="Scenes" />
             <Tab tab="Project" />
-            <Tab tab="Compile" />
+            {#if !Platform.isMobile}
+              <Tab tab="Compile" />
+            {/if}
           </div>
         </div>
         {#if $selectedTab === "Scenes"}
@@ -50,7 +59,7 @@
           <div class="tab-panel-container">
             <ProjectDetails />
           </div>
-        {:else}
+        {:else if !Platform.isMobile}
           <div class="tab-panel-container disconnected">
             <CompileView />
           </div>
@@ -61,14 +70,16 @@
         <div class="tabs">
           <div class="tab-list">
             <Tab tab="Project" />
-            <Tab tab="Compile" />
+            {#if !Platform.isMobile}
+              <Tab tab="Compile" />
+            {/if}
           </div>
         </div>
         {#if $selectedTab === "Project"}
           <div class="tab-panel-container">
             <ProjectDetails />
           </div>
-        {:else}
+        {:else if !Platform.isMobile}
           <div class="tab-panel-container">
             <CompileView />
           </div>

@@ -12,7 +12,8 @@ export default class AddStepModal extends Modal {
   onOpen(): void {
     const { contentEl } = this;
 
-    contentEl.createEl("h1", { text: "Add Compile Step to Workflow" });
+    this.modalEl.addClass("inkwell-add-step-modal");
+    this.setTitle("Add Compile Step to Workflow");
     const entrypoint = contentEl.createDiv("inkwell-add-step-root");
 
     const context = appContext(this);
