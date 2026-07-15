@@ -1,38 +1,41 @@
-import type { App, PaneType } from "obsidian";
-
-import { get } from "svelte/store";
-
-import type { CommandBuilder } from "./types";
 import { activeFile, selectedTab } from "src/view/stores";
+import { type App, type PaneType } from "obsidian";
 import {
-  projects as projectsStore,
+  findScene,
+  type SceneNavigationLocation,
+  scenePath,
+  scenePathForLocation,
+} from "src/model/scene-navigation";
+import {
   projectsByTitle,
+  projects as projectsStore,
   selectedProject,
   selectedProjectPath,
 } from "src/model/stores";
-import {
-  findScene,
-  scenePath,
-  scenePathForLocation,
-  type SceneNavigationLocation,
-} from "src/model/scene-navigation";
-import { VIEW_TYPE_INKWELL_EXPLORER } from "src/view/explorer/ExplorerPane";
+import { type CommandBuilder } from "./types";
+import { get } from "svelte/store";
 import type InkwellPlugin from "src/main";
-import type { Project } from "src/model/types";
 import { JumpModal } from "./helpers";
+import { type Project } from "src/model/types";
+import { VIEW_TYPE_INKWELL_EXPLORER } from "src/view/explorer/ExplorerPane";
 
 const checkForLocation = (
   checking: boolean,
   location: SceneNavigationLocation,
   app: App,
 ): boolean | void => {
-  const path = get(activeFile).path;
+  const file = get(activeFile);
+  if (!file) {
+    return checking ? false : undefined;
+  }
   const ps = get(projectsStore);
-  const newPath = scenePathForLocation(location, path, ps, app.vault);
+  const newPath = scenePathForLocation(location, file.path, ps, app.vault);
   if (checking) {
     return newPath !== null;
   }
-  app.workspace.openLinkText(newPath, "/", false);
+  if (newPath) {
+    app.workspace.openLinkText(newPath, "/", false);
+  }
 };
 
 export const previousScene: CommandBuilder = (plugin) => ({
@@ -67,13 +70,15 @@ export const focusCurrentProject: CommandBuilder = () => ({
   id: "inkwell-focus-current-project",
   name: "Open current note's project",
   editorCheckCallback(checking) {
-    const path = get(activeFile).path;
+    const file = get(activeFile);
+    if (!file) return false;
+    const { path } = file;
     const ps = get(projectsStore);
 
     const index = ps.findIndex((p) => p.vaultPath === path);
-    if (checking && index >= 0) {
+    if (checking && index !== -1) {
       return true;
-    } else if (!checking && index >= 0) {
+    } else if (!checking && index !== -1) {
       selectedProjectPath.set(ps[index].vaultPath);
     } else {
       const scene = findScene(path, ps);
@@ -108,7 +113,7 @@ export const jumpToProject: CommandBuilder = (plugin) => ({
   id: "inkwell-jump-to-project",
   name: "Jump to project",
   callback: () => {
-    const byTitle: Map<string, Project> = new Map(Object.entries(get(projectsByTitle)));
+    const byTitle = new Map<string, Project>(Object.entries(get(projectsByTitle)));
 
     new JumpModal(
       plugin.app,
@@ -130,7 +135,7 @@ export const jumpToProject: CommandBuilder = (plugin) => ({
 export const jumpToScene: CommandBuilder = (plugin) => ({
   id: "inkwell-jump-to-scene",
   name: "Jump to scene in current project",
-  checkCallback(checking) {
+  checkCallback(checking): boolean | void {
     const current = get(selectedProject);
     if (!current || current.format === "single" || current.scenes.length === 0) {
       return false;
@@ -139,7 +144,7 @@ export const jumpToScene: CommandBuilder = (plugin) => ({
       return true;
     }
 
-    const scenesToTitles: Map<string, string> = new Map();
+    const scenesToTitles = new Map<string, string>();
     current.scenes.forEach((s) => {
       scenesToTitles.set(`${"\t".repeat(s.indent)}${s.title}`, s.title);
     });
@@ -166,7 +171,7 @@ export const jumpToScene: CommandBuilder = (plugin) => ({
 export const revealProjectFolder: CommandBuilder = (plugin) => ({
   id: "inkwell-reveal-project-folder",
   name: "Reveal current project in navigation",
-  checkCallback(checking) {
+  checkCallback(checking): boolean | void {
     const path = get(selectedProjectPath);
     if (checking) {
       return path !== null;
@@ -175,8 +180,10 @@ export const revealProjectFolder: CommandBuilder = (plugin) => ({
     if (!path) return;
 
     try {
-      const parent = plugin.app.vault.getAbstractFileByPath(path).parent;
-      plugin.app.internalPlugins.plugins["file-explorer"]?.instance.revealInFolder(parent);
+      const file = plugin.app.vault.getAbstractFileByPath(path);
+      if (file?.parent) {
+        plugin.app.internalPlugins.plugins["file-explorer"]?.instance.revealInFolder(file.parent);
+      }
     } catch (error) {
       console.error("[Inkwell] Error calling file-explorer.revealInFolder:", error);
     }
@@ -186,17 +193,17 @@ export const revealProjectFolder: CommandBuilder = (plugin) => ({
 export const focusNewSceneField: CommandBuilder = (plugin) => ({
   id: "inkwell-focus-new-scene-field",
   name: "Focus new scene field",
-  checkCallback(checking) {
+  checkCallback(checking): boolean | void {
     const project = get(selectedProject);
     if (checking) {
-      return project && project.format === "scenes";
+      return project?.format === "scenes";
     }
     if (!project || project.format !== "scenes") return;
 
     showLeaf(plugin);
     selectedTab.set("Scenes");
     setTimeout(() => {
-      activeDocument.getElementById("new-scene").focus();
+      activeDocument.querySelector<HTMLElement>("#new-scene")?.focus();
     }, 0);
   },
 });

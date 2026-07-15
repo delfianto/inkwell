@@ -1,4 +1,4 @@
-import type { App, TFile } from "obsidian";
+import { type App, type TFile } from "obsidian";
 
 /**
  * Creates a note at `path` with a given `template` if a templating plugin is enabled.
@@ -53,8 +53,8 @@ export async function createNote(
   if (!(await app.vault.adapter.exists(pathComponents.join("/")))) {
     try {
       await app.vault.createFolder(pathComponents.join("/"));
-    } catch (e) {
-      console.error(`[Inkwell] Failed to create new note at "${path}"`, e);
+    } catch (error) {
+      console.error(`[Inkwell] Failed to create new note at "${path}"`, error);
       return null;
     }
   }
@@ -65,18 +65,18 @@ export async function createNote(
     // didn't initially exist.  By creating the parent folder above, we avoid
     // that situation.  This may change in later versions of obsidian.
     return await app.vault.create(path, initialContent);
-  } catch (e: unknown) {
-    console.error(`[Inkwell] Failed to create new note at "${path}"`, e);
+  } catch (error: unknown) {
+    console.error(`[Inkwell] Failed to create new note at "${path}"`, error);
     return null;
   }
 }
 
 function isTemplaterEnabled(app: App): boolean {
-  return !!app.plugins.getPlugin("templater-obsidian");
+  return Boolean(app.plugins.getPlugin("templater-obsidian"));
 }
 
 function isTemplatesEnabled(app: App): boolean {
-  return !!app.internalPlugins.getEnabledPluginById("templates");
+  return Boolean(app.internalPlugins.getEnabledPluginById("templates"));
 }
 
 async function createWithTemplater(
@@ -90,6 +90,10 @@ async function createWithTemplater(
     return null;
   }
   const template = app.vault.getAbstractFileByPath(templatePath);
+  if (!template) {
+    console.error("[Inkwell] Template not found:", templatePath);
+    return null;
+  }
 
   const runningConfig = templaterPlugin.templater.create_running_config(template, file, 0);
   return await templaterPlugin.templater.read_and_parse_template(runningConfig);
@@ -108,8 +112,8 @@ async function createWithTemplates(app: App, templatePath: string): Promise<stri
   const dateFormat = corePlugin.options["dateFormat"] || "YYYY-MM-DD";
   const timeFormat = corePlugin.options["timeFormat"] || "HH:mm";
 
-  contents = contents.replace(`{{date}}`, window.moment().format(dateFormat));
-  contents = contents.replace(`{{time}}`, window.moment().format(timeFormat));
+  contents = contents.replace(`{{date}}`, globalThis.moment().format(dateFormat));
+  contents = contents.replace(`{{time}}`, globalThis.moment().format(timeFormat));
 
   return contents;
 }

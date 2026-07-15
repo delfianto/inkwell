@@ -2,20 +2,19 @@
   import { normalizePath, type TFolder } from "obsidian";
   import { getContext } from "svelte";
 
-  let { parent }: { parent: TFolder } = $props();
+  const { parent }: { parent: TFolder } = $props();
 
   let type: "scenes" | "single" = $state("scenes");
   let title: string = $state("");
 
-  const regex = /[:\\/]/;
-  let valid = $derived(!!title && !regex.test(title));
-  let projectPath = $derived(
-    valid
-      ? type === "scenes"
-        ? normalizePath(`${parent.path}/${title}/Index.md`)
-        : normalizePath(`${parent.path}/${title}.md`)
-      : ""
-  );
+  const regex = /[:\\/]/u;
+  const valid = $derived(Boolean(title) && !regex.test(title));
+  const projectPath = $derived.by(() => {
+    if (!valid) return "";
+    return type === "scenes"
+      ? normalizePath(`${parent.path}/${title}/Index.md`)
+      : normalizePath(`${parent.path}/${title}.md`);
+  });
 
   const createProject: (
     format: "scenes" | "single",

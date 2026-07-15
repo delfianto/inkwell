@@ -1,12 +1,16 @@
-import type { Editor, MarkdownFileInfo, MarkdownView } from "obsidian";
-
-import { projectForPath } from "src/model/scene-navigation";
+import { type App, type Editor, type MarkdownFileInfo, type MarkdownView } from "obsidian";
+import { type MultipleSceneProject, type Project, type SingleSceneProject } from "src/model/types";
 import { projects, selectedProjectPath } from "src/model/stores";
-import { get } from "svelte/store";
-import type { CommandBuilder } from "./types";
-import { insertProjectFrontmatter } from "src/model/project-utils";
+import { type CommandBuilder } from "./types";
 import { fileNameFromPath } from "src/lib/path";
-import type { Project, MultipleSceneProject, SingleSceneProject } from "src/model/types";
+import { get } from "svelte/store";
+import { insertProjectFrontmatter } from "src/model/project-utils";
+import { projectForPath } from "src/model/scene-navigation";
+
+async function applyNewProjectFrontmatter(app: App, path: string, project: Project): Promise<void> {
+  await insertProjectFrontmatter(app, path, project);
+  selectedProjectPath.set(path);
+}
 
 const callbackForFormat = (
   format: "scenes" | "single",
@@ -14,7 +18,10 @@ const callbackForFormat = (
   _editor: Editor,
   view: MarkdownView | MarkdownFileInfo,
 ): boolean | void => {
-  const file = view.file;
+  const { file } = view;
+  if (!file) {
+    return checking ? false : undefined;
+  }
 
   const project = projectForPath(file.path, get(projects));
   if (checking && project) {
@@ -45,22 +52,19 @@ const callbackForFormat = (
         ebook: {},
       };
       return multi;
-    } else {
-      const single: SingleSceneProject = {
-        format: "single",
-        title,
-        titleInFrontmatter: false,
-        vaultPath: file.path,
-        workflow: null,
-        ebook: {},
-      };
-      return single;
     }
+    const single: SingleSceneProject = {
+      format: "single",
+      title,
+      titleInFrontmatter: false,
+      vaultPath: file.path,
+      workflow: null,
+      ebook: {},
+    };
+    return single;
   })();
 
-  insertProjectFrontmatter(view.app, file.path, newProject).then(() => {
-    selectedProjectPath.set(file.path);
-  });
+  void applyNewProjectFrontmatter(view.app, file.path, newProject);
 };
 
 export const insertMultiSceneTemplate: CommandBuilder = (_plugin) => ({

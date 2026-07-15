@@ -1,7 +1,12 @@
-import type { App } from "obsidian";
+import { pluginSettings, waitingForSync } from "./stores";
+import { type App } from "obsidian";
 import { get } from "svelte/store";
 
-import { pluginSettings, waitingForSync } from "./stores";
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 /**
  * Gates plugin initialization on Obsidian's first-party Sync plugin.
@@ -20,7 +25,7 @@ import { pluginSettings, waitingForSync } from "./stores";
  */
 export class SyncWaiter {
   private app: App;
-  private settlingTime = 30000;
+  private settlingTime = 30_000;
 
   constructor(app: App) {
     this.app = app;
@@ -42,38 +47,20 @@ export class SyncWaiter {
       // If we can't access Sync's status (API may have changed), fall back
       // to a fixed-duration wait.
       if (!sync?.syncing) {
-        return this.fallbackWait();
+        await this.fallbackWait();
+        return;
       }
 
-      return new Promise((resolve) => {
-        if (!sync.syncing) {
-          waitingForSync.set(false);
-          resolve();
-          return;
-        }
-
-        console.log("[Inkwell] Waiting for active sync to complete...");
-
-        const interval = setInterval(() => {
-          if (!sync.syncing) {
-            clearInterval(interval);
-            clearTimeout(timeout);
-            console.log("[Inkwell] Sync complete.");
-            waitingForSync.set(false);
-            resolve();
-          }
-        }, 1000);
-
-        const timeout = setTimeout(() => {
-          clearInterval(interval);
-          console.log("[Inkwell] Sync wait timed out");
-          waitingForSync.set(false);
-          resolve();
-        }, this.settlingTime);
-      });
+      console.log("[Inkwell] Waiting for active sync to complete...");
+      const deadline = Date.now() + this.settlingTime;
+      while (sync.syncing && Date.now() < deadline) {
+        await delay(1000);
+      }
+      console.log(sync.syncing ? "[Inkwell] Sync wait timed out" : "[Inkwell] Sync complete.");
+      waitingForSync.set(false);
     } catch {
       waitingForSync.set(false);
-      return this.fallbackWait();
+      await this.fallbackWait();
     }
   }
 
@@ -92,6 +79,6 @@ export class SyncWaiter {
       return;
     }
 
-    return new Promise((resolve) => setTimeout(resolve, settings.fallbackWaitTime * 1000));
+    await delay(settings.fallbackWaitTime * 1000);
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "inkwell",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Write novels, screenplays, and other long projects in Obsidian (https://obsidian.md). Derived from Longform by Kevin Barrett (kevboh).",
   "keywords": [],
   "license": "MIT",
@@ -10,10 +10,10 @@
   "scripts": {
     "dev": "vp build --watch",
     "build": "vp build",
-    "check": "vp check",
-    "lint": "vp lint",
-    "lint:fix": "vp lint --fix",
-    "format": "vp fmt --write",
+    "check": "vp fmt --check -c .oxfmtrc.json && vp lint -c .oxlintrc.json",
+    "lint": "vp lint -c .oxlintrc.json",
+    "lint:fix": "vp lint -c .oxlintrc.json --fix",
+    "format": "vp fmt --write -c .oxfmtrc.json",
     "type-check": "bun x tsc --noEmit && bun x svelte-check --tsconfig tsconfig.json",
     "test": "vp test run",
     "test:coverage": "vp test run --coverage"

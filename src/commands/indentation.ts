@@ -1,31 +1,33 @@
-import { get } from "svelte/store";
-
 import { activeFile } from "src/view/stores";
-import { projects } from "src/model/stores";
+import { type CommandBuilder } from "./types";
 import { findScene } from "src/model/scene-navigation";
-import type { CommandBuilder } from "./types";
+import { get } from "svelte/store";
+import { projects } from "src/model/stores";
 
 const checkIndent = (checking: boolean, action: "indent" | "unindent"): boolean | void => {
-  const path = get(activeFile).path;
+  const file = get(activeFile);
+  if (!file) {
+    return checking ? false : undefined;
+  }
   const allProjects = get(projects);
-  const result = findScene(path, allProjects);
+  const result = findScene(file.path, allProjects);
   if (checking && result) {
     return action === "indent" || result.currentIndent > 0;
   }
 
   if (result) {
-    projects.update((all) => {
-      return all.map((p) => {
+    projects.update((all) =>
+      all.map((p) => {
         if (p.vaultPath !== result.project.vaultPath || p.format !== "scenes") {
           return p;
         }
 
         const delta = action === "indent" ? 1 : -1;
 
-        p.scenes[result.index].indent = p.scenes[result.index].indent + delta;
+        p.scenes[result.index].indent += delta;
         return p;
-      });
-    });
+      }),
+    );
   }
 };
 

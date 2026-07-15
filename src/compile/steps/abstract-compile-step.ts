@@ -1,5 +1,5 @@
-import type { App, CachedMetadata } from "obsidian";
-import type { Project } from "src/model/types";
+import { type App, type CachedMetadata } from "obsidian";
+import { type Project } from "src/model/types";
 
 export enum CompileStepKind {
   /** Takes an array of scene files, processes them in some way, and outputs an array of scene files. */
@@ -12,34 +12,40 @@ export enum CompileStepKind {
 
 export function formatStepKind(k: CompileStepKind): string {
   switch (k) {
-    case CompileStepKind.Scene:
+    case CompileStepKind.Scene: {
       return "Scene";
-    case CompileStepKind.Join:
+    }
+    case CompileStepKind.Join: {
       return "Join";
-    case CompileStepKind.Manuscript:
+    }
+    case CompileStepKind.Manuscript: {
       return "Manuscript";
+    }
   }
 }
 
 export function explainStepKind(k: CompileStepKind): string {
   switch (k) {
-    case CompileStepKind.Scene:
+    case CompileStepKind.Scene: {
       return "Runs on every scene in your manuscript and outputs the resulting scenes.";
-    case CompileStepKind.Join:
+    }
+    case CompileStepKind.Join: {
       return "Accepts all scenes as input and outputs a single manuscript.";
-    case CompileStepKind.Manuscript:
+    }
+    case CompileStepKind.Manuscript: {
       return "Runs once on your compiled manuscript.";
+    }
   }
 }
 
 /** The type of an option’s value. Determines the type of input in the compile UI. */
 export enum CompileStepOptionType {
   /** A checkbox corresponding to either true or false. */
-  Boolean,
+  Boolean = 0,
   /** A single-line freeform text entry. */
-  Text,
+  Text = 1,
   /** Key-value text */
-  MultilineText,
+  MultilineText = 2,
 }
 
 /**
@@ -80,7 +86,7 @@ export interface CompileStepDescription {
 }
 
 /** The per-scene payload used for Scene and Join steps at compile-time. */
-export type CompileSceneInput = {
+export interface CompileSceneInput {
   /** The path to the scene. */
   path: string;
   /** The name of the scene (filename without parent path or .md extension) */
@@ -93,14 +99,14 @@ export type CompileSceneInput = {
   indentationLevel?: number;
   /** The array of numbers corresponding to this scene’s “number,” e.g. `1.1.2`, if this scene belongs to a multi-scene project. */
   numbering?: number[];
-};
+}
 
 /** The per-manuscript payload used for Manuscript steps at compile-time. */
-export type CompileManuscriptInput = {
+export interface CompileManuscriptInput {
   contents: string;
-};
+}
 
-// TODO: add duck typing function for steps to use to avoid checking context directly
+// Future: a duck-typing helper for steps, to avoid checking context directly.
 /**
  * Either an array of scene-based inputs, or a single manuscript-based input.
  */
@@ -112,7 +118,7 @@ export type CompileInput = CompileSceneInput[] | CompileManuscriptInput;
  * the current inputs, the current project, access to Obsidian APIs, and some
  * utility functions.
  */
-export type CompileContext = {
+export interface CompileContext {
   /** The kind of step being performed. Can be used by steps with multiple available kinds to determine what should happen on compile. */
   kind: CompileStepKind;
   /**
@@ -120,7 +126,7 @@ export type CompileContext = {
    * @note Boolean options will be `true` or `false`. Text options will be strings. Text option values are
    * not automatically trimmed: if your step expects a trimmed string, it must do so itself.
    */
-  optionValues: { [id: string]: unknown };
+  optionValues: Record<string, unknown>;
   /** The path, relative to the vault root, to the compiled project. */
   projectPath: string;
   /** The project currently being compiled. */
@@ -132,7 +138,7 @@ export type CompileContext = {
     /** Obsidian’s normalizePath function. Converts an arbitrary file path string into a normalized one. */
     normalizePath: (path: string) => string;
   };
-};
+}
 
 /**
  * A step in a workflow that turns a Inkwell project into a compiled document (or some other result).
@@ -143,7 +149,7 @@ export interface CompileStep {
   /** Enough info to instantiate this step. Serializable, used to store the step in a workflow. */
   description: CompileStepDescription;
   /** A map of option IDs to values, used to serialize this step for storage. */
-  optionValues: { [id: string]: unknown };
+  optionValues: Record<string, unknown>;
   /**
     Function that is executed during compilation. It may be `async`.
     Errors encountered during execution should be thrown and will
@@ -156,18 +162,18 @@ export interface CompileStep {
     with the appropriate changes made to `contents`. If of kind "Join",
     the same shape as a "Manuscript" step input.
   */
-  compile(input: CompileInput, context: CompileContext): CompileInput | Promise<CompileInput>;
+  compile: (input: CompileInput, context: CompileContext) => CompileInput | Promise<CompileInput>;
 }
 
 /** A named series of steps to compile a Inkwell project into a finished product. */
-export type Workflow = {
+export interface Workflow {
   /** The name of the workflow via user input. */
   name: string;
   /** A longer description of the workflow. */
   description: string;
   /** The steps that comprise the workflow. */
   steps: CompileStep[];
-};
+}
 
 export function makeBuiltinStep(
   v: {
@@ -182,14 +188,9 @@ export function makeBuiltinStep(
     description: {
       ...v.description,
       canonicalID: v.id,
-      isScript: isScript,
+      isScript,
     },
-    optionValues: v.description.options.reduce((agg, opt) => {
-      return {
-        ...agg,
-        [opt.id]: opt.default,
-      };
-    }, {}),
+    optionValues: Object.fromEntries(v.description.options.map((opt) => [opt.id, opt.default])),
   };
 }
 

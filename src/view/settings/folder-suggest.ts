@@ -1,6 +1,6 @@
 // Credits go to Liam's Periodic Notes Plugin: https://github.com/liamcain/obsidian-periodic-notes
 
-import { App, normalizePath, TAbstractFile, TFolder } from "obsidian";
+import { type App, normalizePath, type TAbstractFile, TFolder } from "obsidian";
 import { TextInputSuggest } from "./suggest";
 
 export class FolderSuggest extends TextInputSuggest<TFolder> {
@@ -27,7 +27,7 @@ export class FolderSuggest extends TextInputSuggest<TFolder> {
         folder.path.toLowerCase().contains(lowerCaseInputStr) &&
         (this.relativeRoot === null ||
           folder.path === this.relativeRoot ||
-          folder.path.startsWith(this.relativeRoot + "/"))
+          folder.path.startsWith(`${this.relativeRoot}/`))
       ) {
         folders.push(folder);
       }
@@ -54,8 +54,7 @@ export class FolderSuggest extends TextInputSuggest<TFolder> {
       text = text.startsWith("/") ? text.slice(1) : text;
       text = text.length === 0 ? "/" : text;
       return text;
-    } else {
-      return path;
     }
+    return path;
   }
 }

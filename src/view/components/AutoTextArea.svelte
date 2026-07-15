@@ -14,8 +14,8 @@
     [key: string]: unknown;
   } = $props();
 
-  let minHeight = $derived(`${minRows * 1.2}rem`);
-  let maxHeight = $derived(maxRows ? `${1 + maxRows * 1.2}rem` : "auto");
+  const minHeight = $derived(`${minRows * 1.2}rem`);
+  const maxHeight = $derived(maxRows ? `${1 + maxRows * 1.2}rem` : "auto");
 </script>
 
 <div class="container">

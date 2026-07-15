@@ -1,8 +1,8 @@
-import { defineConfig, type Plugin } from "vite";
-import { svelte } from "@sveltejs/vite-plugin-svelte";
-import builtins from "builtin-modules";
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { defineConfig, type Plugin } from "vite";
+import builtins from "builtin-modules";
 import path from "node:path";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 
 // vite build always sets NODE_ENV=production, so use --watch presence to detect dev mode.
 // Dev (watch): rebuilds into a live Obsidian plugins/inkwell/ directory so changes
@@ -85,7 +85,7 @@ export default defineConfig({
     },
     outDir,
     emptyOutDir: !isWatch,
-    sourcemap: !isWatch ? false : "inline",
+    sourcemap: isWatch ? "inline" : false,
     minify: !isWatch,
     copyPublicDir: false,
   },

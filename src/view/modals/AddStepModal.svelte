@@ -1,21 +1,18 @@
 <script lang="ts">
   import {
-    selectedProject,
-    workflows,
-    currentWorkflow,
-    userScriptSteps,
-  } from "src/model/stores";
-  import { getContext } from "svelte";
-
-  import { BUILTIN_STEPS } from "../../compile/steps";
-  import type {
-    CompileStep,
-    Workflow,
-  } from "../../compile/steps/abstract-compile-step";
-  import {
+    type CompileStep,
     explainStepKind,
     formatStepKind,
+    type Workflow,
   } from "../../compile/steps/abstract-compile-step";
+  import {
+    currentWorkflow,
+    selectedProject,
+    userScriptSteps,
+    workflows,
+  } from "src/model/stores";
+  import { BUILTIN_STEPS } from "../../compile/steps";
+  import { getContext } from "svelte";
 
   const close: () => void = getContext("close");
   function onStepClick(step: CompileStep) {
@@ -26,8 +23,8 @@
         { ...step, id: `${step.id}-${Date.now()}` },
       ],
     } as Workflow;
-    const currentWorkflowName = $selectedProject.workflow;
-    $workflows[currentWorkflowName] = newWorkflow;
+    const currentWorkflowName = $selectedProject!.workflow;
+    $workflows[currentWorkflowName!] = newWorkflow;
     close();
   }
 </script>

@@ -1,12 +1,10 @@
-import { debounce, normalizePath, type App } from "obsidian";
-import { get, type Unsubscriber } from "svelte/store";
-
-import { DEFAULT_WORKFLOWS } from "src/compile";
-import type { Workflow } from "src/compile";
+import { type App, debounce, normalizePath } from "obsidian";
+import { DEFAULT_WORKFLOWS, type Workflow } from "src/compile";
 import { deserializeWorkflow, serializeWorkflow } from "src/compile/serialization";
-import { inkwellDataDir } from "src/lib/path";
+import { get, type Unsubscriber } from "svelte/store";
 import { initialized, workflows } from "./stores";
-import type { SerializedWorkflow } from "./types";
+import { inkwellDataDir } from "src/lib/path";
+import { type SerializedWorkflow } from "./types";
 
 /**
  * Owns workflow persistence to `.obsidian/inkwell/workflows.json`.
@@ -69,8 +67,8 @@ export class WorkflowStorage {
         await this.app.vault.adapter.mkdir(this.dir);
       }
       await this.app.vault.adapter.write(this.path, JSON.stringify(serialized, null, 2));
-    } catch (e) {
-      console.error("[Inkwell] Failed to save workflows to vault:", e);
+    } catch (error) {
+      console.error("[Inkwell] Failed to save workflows to vault:", error);
     }
   }
 
@@ -80,8 +78,8 @@ export class WorkflowStorage {
         const raw = await this.app.vault.adapter.read(this.path);
         return JSON.parse(raw);
       }
-    } catch (e) {
-      console.error("[Inkwell] Failed to read workflows from vault:", e);
+    } catch (error) {
+      console.error("[Inkwell] Failed to read workflows from vault:", error);
     }
     return null;
   }

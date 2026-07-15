@@ -1,34 +1,34 @@
+import { appContext, ICON_NAME, ignoreScene, UndoManager } from "src/view";
+import { compile, type CompileStatus, type CompileStepKind, type Workflow } from "src/compile";
+import ConfirmActionModal, { type ConfirmActionOptions } from "../modals/ConfirmActionModal";
+import {
+  insertScene,
+  type MultipleSceneProject,
+  type Project,
+  projects,
+  scenePath,
+  selectedProject,
+} from "src/model";
 import {
   ItemView,
   type KeymapContext,
   Menu,
-  TAbstractFile,
-  WorkspaceLeaf,
   type PaneType,
   Scope,
+  type TAbstractFile,
+  type WorkspaceLeaf,
 } from "obsidian";
-import type { CompileStatus, Workflow } from "src/compile";
-import { compile, CompileStepKind } from "src/compile";
-import type { Project, MultipleSceneProject } from "src/model/types";
-import AddStepModal from "../modals/AddStepModal";
-import ConfirmActionModal from "../modals/ConfirmActionModal";
-import { ICON_NAME } from "../icon";
-import ExplorerView from "./ExplorerView.svelte";
 import { mount, unmount } from "svelte";
-import { scenePath } from "src/model/scene-navigation";
+import AddStepModal from "../modals/AddStepModal";
+import ExplorerView from "./ExplorerView.svelte";
 import { get } from "svelte/store";
-import { projects, selectedProject } from "src/model/stores";
-import { insertScene } from "src/model/project-utils";
-import { UndoManager } from "../undo-manager";
-import { ignoreScene } from "./scene-menu-items";
-import { appContext } from "../utils";
 
 export const VIEW_TYPE_INKWELL_EXPLORER = "VIEW_TYPE_INKWELL_EXPLORER";
 
 export class ExplorerPane extends ItemView {
-  private explorerView: ReturnType<typeof mount>;
+  private explorerView!: ReturnType<typeof mount>;
   private undoManager = new UndoManager();
-  private keyScope: Scope;
+  private keyScope!: Scope;
 
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
@@ -42,11 +42,11 @@ export class ExplorerPane extends ItemView {
     return "Inkwell";
   }
 
-  getIcon(): string {
+  override getIcon(): string {
     return ICON_NAME;
   }
 
-  async onOpen(): Promise<void> {
+  override onOpen(): Promise<void> {
     this.keyScope = new Scope(this.app.scope);
     this.keyScope.register(["Mod"], "z", (evt: KeyboardEvent, ctx: KeymapContext) => {
       const activePane = this.app.workspace.getActiveViewOfType(ExplorerPane);
@@ -71,27 +71,9 @@ export class ExplorerPane extends ItemView {
     context.set("undoManager", this.undoManager);
 
     // Context function for showing a generic confirmation modal
-    context.set(
-      "showConfirmModal",
-      (
-        title: string,
-        description: string,
-        yesText: string,
-        yesAction: () => void,
-        noText?: string,
-        noAction?: () => void,
-      ) => {
-        new ConfirmActionModal(
-          this.app,
-          title,
-          description,
-          yesText,
-          yesAction,
-          noText,
-          noAction,
-        ).open();
-      },
-    );
+    context.set("showConfirmModal", (options: ConfirmActionOptions) => {
+      new ConfirmActionModal(this.app, options).open();
+    });
 
     // Create a fully-qualified path to a scene from its name.
     context.set("makeScenePath", (project: MultipleSceneProject, sceneName: string) =>
@@ -105,15 +87,15 @@ export class ExplorerPane extends ItemView {
 
     // Context function for creating new scene notes given a path
     context.set("onNewScene", async (name: string, open: boolean) => {
-      await insertScene(
-        this.app,
-        projects,
-        get(selectedProject) as MultipleSceneProject,
-        name,
-        this.app.vault,
-        { at: "end", relativeTo: null },
+      await insertScene({
+        app: this.app,
+        projectsStore: projects,
+        project: get(selectedProject) as MultipleSceneProject,
+        sceneName: name,
+        vault: this.app.vault,
+        location: { at: "end", relativeTo: null },
         open,
-      );
+      });
     });
 
     const addRelativeScene = (at: "before" | "after", file: TAbstractFile) => {
@@ -122,25 +104,22 @@ export class ExplorerPane extends ItemView {
       let count = 0;
       const sceneNames = new Set(project.scenes.map((s) => s.title));
       while (sceneNames.has(sceneName)) {
-        count = count + 1;
+        count += 1;
         sceneName = `Untitled ${count}`;
       }
 
       const relativeTo = project.scenes.map((s) => s.title).indexOf(file.name.split(".md")[0]);
 
-      if (relativeTo >= 0) {
-        insertScene(
-          this.app,
-          projects,
+      if (relativeTo !== -1) {
+        insertScene({
+          app: this.app,
+          projectsStore: projects,
           project,
           sceneName,
-          this.app.vault,
-          {
-            at,
-            relativeTo,
-          },
-          true,
-        );
+          vault: this.app.vault,
+          location: { at, relativeTo },
+          open: true,
+        });
       }
     };
 
@@ -253,9 +232,11 @@ export class ExplorerPane extends ItemView {
       target: this.contentEl,
       context,
     });
+
+    return Promise.resolve();
   }
 
-  async onClose(): Promise<void> {
+  override async onClose(): Promise<void> {
     this.undoManager.destroy();
     if (this.explorerView) {
       await unmount(this.explorerView);

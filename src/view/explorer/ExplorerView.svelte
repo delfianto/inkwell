@@ -1,15 +1,12 @@
 <script lang="ts">
-  import { Platform } from "obsidian";
+  import { selectedProject, waitingForSync } from "src/model/stores";
   import CompileView from "../compile/CompileView.svelte";
-
-  import { selectedProject } from "src/model/stores";
-  import { selectedTab } from "../stores";
-  import { waitingForSync } from "src/model/stores";
-
   import NewSceneField from "./NewSceneField.svelte";
+  import { Platform } from "obsidian";
+  import ProjectDetails from "./ProjectDetails.svelte";
   import ProjectPicker from "./ProjectPicker.svelte";
   import SceneList from "./SceneList.svelte";
-  import ProjectDetails from "./ProjectDetails.svelte";
+  import { selectedTab } from "../stores";
   import Tab from "./Tab.svelte";
 
   $effect(() => {

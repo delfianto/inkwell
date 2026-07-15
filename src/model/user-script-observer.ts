@@ -1,9 +1,19 @@
-import { debounce, type Vault, type TAbstractFile } from "obsidian";
-import type { CompileStep, Workflow } from "src/compile";
-import { CompileStepKind, CompileStepOptionType, makeBuiltinStep } from "src/compile";
+import {
+  type CompileStep,
+  CompileStepKind,
+  CompileStepOptionType,
+  makeBuiltinStep,
+  type Workflow,
+} from "src/compile";
+import { debounce, type TAbstractFile, type Vault } from "obsidian";
 import { userScriptSteps, workflows } from "src/model/stores";
-import { inkwellDataDir } from "src/lib/path";
 import { get } from "svelte/store";
+import { inkwellDataDir } from "src/lib/path";
+
+function requireShim(id: string): unknown {
+  const req = (globalThis as { require?: (moduleId: string) => unknown }).require;
+  return req ? req(id) : undefined;
+}
 
 const DEBOUNCE_SCRIPT_LOAD_DELAY_MS = 10_000;
 
@@ -46,8 +56,8 @@ export class UserScriptObserver {
       try {
         const step = await this.loadScript(file);
         userSteps.push(step);
-      } catch (e) {
-        console.error(`[Inkwell] skipping user script ${file} due to error:`, e);
+      } catch (error) {
+        console.error(`[Inkwell] skipping user script ${file} due to error:`, error);
       }
     }
 
@@ -55,37 +65,30 @@ export class UserScriptObserver {
     userScriptSteps.set(userSteps);
 
     // if workflows have loaded, merge in user steps to get updated values
-    const _workflows = get(workflows);
-    const workflowNames = Object.keys(_workflows);
+    const loadedWorkflows = get(workflows);
+    const workflowNames = Object.keys(loadedWorkflows);
     const mergedWorkflows: Record<string, Workflow> = {};
     workflowNames.forEach((name) => {
-      const workflow = _workflows[name];
+      const workflow = loadedWorkflows[name];
       const workflowSteps = workflow.steps.map((step) => {
         const userStep = userSteps.find(
           (u) => step.description.canonicalID === u.description.canonicalID,
         );
         if (userStep) {
-          let mergedStep = {
+          const mergedStep = {
             ...userStep,
             id: step.id,
-            optionValues: userStep.optionValues,
+            optionValues: { ...userStep.optionValues },
           };
-          // Copy existing step's option values into the merged step
+          // Copy the existing step's option values into the merged step.
           for (const key of Object.keys(step.optionValues)) {
             if (mergedStep.optionValues[key]) {
-              mergedStep = {
-                ...mergedStep,
-                optionValues: {
-                  ...mergedStep.optionValues,
-                  [key]: step.optionValues[key],
-                },
-              };
+              mergedStep.optionValues[key] = step.optionValues[key];
             }
           }
           return mergedStep;
-        } else {
-          return step;
         }
+        return step;
       });
       mergedWorkflows[name] = {
         ...workflow,
@@ -101,20 +104,16 @@ export class UserScriptObserver {
     const js = await this.vault.adapter.read(path);
 
     // eslint-disable-next-line prefer-const
-    let _require = (s: string) => {
-      return window.require && window.require(s);
-    };
-    // eslint-disable-next-line prefer-const
     let exports: any = {};
     // eslint-disable-next-line prefer-const
     let module = {
       exports,
     };
 
-    const evaluateScript = window.eval(
-      "(function anonymous(require, module, exports){" + js + "\n})",
+    const evaluateScript = globalThis.eval(
+      `(function anonymous(require, module, exports){${js}\n})`,
     );
-    evaluateScript(_require, module, exports);
+    evaluateScript(requireShim, module, exports);
     const loadedStep: any = exports["default"] || module.exports;
 
     if (!loadedStep) {
@@ -132,10 +131,11 @@ export class UserScriptObserver {
             (v: string) => CompileStepKind[v as keyof typeof CompileStepKind],
           ),
           options: loadedStep.description.options
-            ? loadedStep.description.options.map((o: any) => ({
-                ...o,
-                type: CompileStepOptionType[o.type as keyof typeof CompileStepOptionType],
-              }))
+            ? loadedStep.description.options.map((o: any) =>
+                Object.assign(o, {
+                  type: CompileStepOptionType[o.type as keyof typeof CompileStepOptionType],
+                }),
+              )
             : [],
         },
       },

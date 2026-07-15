@@ -1,7 +1,12 @@
-import type { CompileContext, CompileInput, CompileManuscriptInput, CompileSceneInput } from "..";
+import {
+  type CompileContext,
+  type CompileInput,
+  type CompileManuscriptInput,
+  type CompileSceneInput,
+} from "..";
 import { CompileStepKind, makeBuiltinStep } from "./abstract-compile-step";
 
-const STRIKETHROUGH_REGEX = /~~(.*?)~~/gm;
+const STRIKETHROUGH_REGEX = /~~(?<struck>.*?)~~/gmu;
 
 export const RemoveStrikethroughsStep = makeBuiltinStep({
   id: "remove-strikethroughs",
@@ -13,17 +18,15 @@ export const RemoveStrikethroughsStep = makeBuiltinStep({
   },
   compile(input: CompileInput, context: CompileContext): CompileInput {
     if (context.kind === CompileStepKind.Scene) {
-      return (input as CompileSceneInput[]).map((sceneInput) => {
-        return {
-          ...sceneInput,
+      return (input as CompileSceneInput[]).map((sceneInput) =>
+        Object.assign(sceneInput, {
           contents: sceneInput.contents.replace(STRIKETHROUGH_REGEX, () => ""),
-        };
-      });
-    } else {
-      return {
-        ...(input as CompileManuscriptInput),
-        contents: (input as CompileManuscriptInput).contents.replace(STRIKETHROUGH_REGEX, () => ""),
-      };
+        }),
+      );
     }
+    return {
+      ...(input as CompileManuscriptInput),
+      contents: (input as CompileManuscriptInput).contents.replace(STRIKETHROUGH_REGEX, () => ""),
+    };
   },
 });

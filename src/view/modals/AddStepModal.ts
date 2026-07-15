@@ -1,15 +1,14 @@
-import { App, Modal } from "obsidian";
-import { mount } from "svelte";
-
+import { type App, Modal } from "obsidian";
 import AddStepModalContent from "./AddStepModal.svelte";
 import { appContext } from "src/view/utils";
+import { mount } from "svelte";
 
 export default class AddStepModal extends Modal {
   constructor(app: App) {
     super(app);
   }
 
-  onOpen(): void {
+  override onOpen(): void {
     const { contentEl } = this;
 
     this.modalEl.addClass("inkwell-add-step-modal");
@@ -25,7 +24,7 @@ export default class AddStepModal extends Modal {
     });
   }
 
-  onClose(): void {
+  override onClose(): void {
     const { contentEl } = this;
     contentEl.empty();
   }

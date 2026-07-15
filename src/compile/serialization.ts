@@ -1,9 +1,11 @@
-import { get } from "svelte/store";
-
+import {
+  type CompileStep,
+  PLACEHOLDER_MISSING_STEP,
+  type Workflow,
+} from "./steps/abstract-compile-step";
+import { type SerializedStep, type SerializedWorkflow } from "src/model/types";
 import { BUILTIN_STEPS } from "./steps";
-import type { CompileStep, Workflow } from "./steps/abstract-compile-step";
-import { PLACEHOLDER_MISSING_STEP } from "./steps/abstract-compile-step";
-import type { SerializedStep, SerializedWorkflow } from "src/model/types";
+import { get } from "svelte/store";
 import { userScriptSteps } from "src/model/stores";
 
 /**

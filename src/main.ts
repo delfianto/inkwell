@@ -1,29 +1,49 @@
 import "./styles.css";
-
-import { Plugin, WorkspaceLeaf, FileView, addIcon, TAbstractFile, TFolder } from "obsidian";
-import type { Unsubscriber } from "svelte/store";
-import { get } from "svelte/store";
-
-import { VIEW_TYPE_INKWELL_EXPLORER, ExplorerPane } from "./view/explorer/ExplorerPane";
 import {
-  PASSTHROUGH_SAVE_SETTINGS_PATHS,
-  type Project,
+  activeFile,
+  ICON_NAME,
+  ICON_SVG,
+  InkwellSettingsTab,
+  LeafStyler,
+  selectedTab,
+} from "./view";
+import {
+  addIcon,
+  FileView,
+  Plugin,
+  type TAbstractFile,
+  TFolder,
+  type WorkspaceLeaf,
+} from "obsidian";
+import {
+  DEFAULT_SETTINGS,
+  initialized,
   type InkwellPluginSettings,
-} from "./model/types";
-import { DEFAULT_SETTINGS, TRACKED_SETTINGS_PATHS } from "./model/types";
-import { activeFile, selectedTab } from "./view/stores";
-import { once } from "./lib/fn";
-import { ICON_NAME, ICON_SVG } from "./view/icon";
-import { LeafStyler } from "./view/leaf-styler";
-import { InkwellSettingsTab } from "./view/settings/InkwellSettings";
-import { UserScriptObserver } from "./model/user-script-observer";
-import { ProjectStoreSync } from "./model/project-store-sync";
-import { WorkflowStorage } from "./model/workflow-storage";
-import { selectedProject, selectedProjectPath, initialized, pluginSettings } from "./model/stores";
+  PASSTHROUGH_SAVE_SETTINGS_PATHS,
+  pluginSettings,
+  type Project,
+  ProjectStoreSync,
+  selectedProject,
+  selectedProjectPath,
+  TRACKED_SETTINGS_PATHS,
+  UserScriptObserver,
+  WordCountTracker,
+  WorkflowStorage,
+} from "./model";
+import { ExplorerPane, VIEW_TYPE_INKWELL_EXPLORER } from "./view/explorer/ExplorerPane";
+import { get, type Unsubscriber } from "svelte/store";
 import { addCommands } from "./commands";
-import { WordCountTracker } from "./model/word-count-tracker";
-import NewProjectModal from "./view/modals/NewProjectModal";
 import { InkwellAPI } from "./api";
+import NewProjectModal from "./view/modals/NewProjectModal";
+import { once } from "./lib/fn";
+
+function changeInKeys(
+  obj1: Record<string, any>,
+  obj2: Record<string, any>,
+  keys: string[],
+): boolean {
+  return keys.some((key) => obj1[key] !== obj2[key]);
+}
 
 export default class InkwellPlugin extends Plugin {
   // Local mirror of the pluginSettings store
@@ -31,13 +51,13 @@ export default class InkwellPlugin extends Plugin {
   // More efficient than a lot of get() calls.
   cachedSettings: InkwellPluginSettings | null = null;
   private unsubscribers: Unsubscriber[] = [];
-  private userScriptObserver: UserScriptObserver;
-  private projectStoreSync: ProjectStoreSync;
-  private workflowStorage: WorkflowStorage;
-  wordCountTracker: WordCountTracker;
-  public api: InkwellAPI;
+  private userScriptObserver!: UserScriptObserver;
+  private projectStoreSync!: ProjectStoreSync;
+  private workflowStorage!: WorkflowStorage;
+  wordCountTracker!: WordCountTracker;
+  public api!: InkwellAPI;
 
-  async onload(): Promise<void> {
+  override async onload(): Promise<void> {
     console.log(`[Inkwell] Starting Inkwell ${this.manifest.version}…`);
     addIcon(ICON_NAME, ICON_SVG);
 
@@ -63,14 +83,6 @@ export default class InkwellPlugin extends Plugin {
     this.unsubscribers.push(
       pluginSettings.subscribe(async (value) => {
         let shouldSave = false;
-
-        const changeInKeys = (
-          obj1: Record<string, any>,
-          obj2: Record<string, any>,
-          keys: string[],
-        ): boolean => {
-          return !!keys.find((k) => obj1[k] !== obj2[k]);
-        };
 
         if (
           this.cachedSettings &&
@@ -98,6 +110,7 @@ export default class InkwellPlugin extends Plugin {
     activeFile.set(this.app.workspace.getActiveFile());
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", (leaf) => {
+        if (!leaf) return;
         if (leaf.view instanceof FileView) {
           activeFile.set(leaf.view.file);
         } else {
@@ -118,7 +131,7 @@ export default class InkwellPlugin extends Plugin {
     this.api = new InkwellAPI();
   }
 
-  onunload(): void {
+  override onunload(): void {
     this.projectStoreSync.destroy();
     this.unsubscribers.forEach((u) => u());
     this.wordCountTracker.destroy();
@@ -126,13 +139,13 @@ export default class InkwellPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    const settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const settings = { ...DEFAULT_SETTINGS, ...(await this.loadData()) };
 
-    const _pluginSettings = Object.fromEntries(
+    const trackedSettings = Object.fromEntries(
       TRACKED_SETTINGS_PATHS.filter((key) => key in settings).map((key) => [key, settings[key]]),
     ) as InkwellPluginSettings;
-    pluginSettings.set(_pluginSettings);
-    selectedProjectPath.set(_pluginSettings.selectedProjectPath);
+    pluginSettings.set(trackedSettings);
+    selectedProjectPath.set(trackedSettings.selectedProjectPath);
 
     // User scripts load imperatively first; workflows may reference them.
     this.userScriptObserver = new UserScriptObserver(this.app.vault);
@@ -160,7 +173,7 @@ export default class InkwellPlugin extends Plugin {
 
     this.watchProjects();
 
-    const defaultToScenes = once(function (d: Project) {
+    const defaultToScenes = once((d: Project) => {
       if (d && d.format === "scenes") {
         selectedTab.set("Scenes");
       }
@@ -182,19 +195,18 @@ export default class InkwellPlugin extends Plugin {
         this.cachedSettings = get(pluginSettings);
         await this.saveSettings();
       }),
+      this.workflowStorage.watch(),
     );
-
-    this.unsubscribers.push(this.workflowStorage.watch());
 
     this.initLeaf();
     initialized.set(true);
   }
 
   initLeaf(): void {
-    if (this.app.workspace.getLeavesOfType(VIEW_TYPE_INKWELL_EXPLORER).length) {
+    if (this.app.workspace.getLeavesOfType(VIEW_TYPE_INKWELL_EXPLORER).length > 0) {
       return;
     }
-    this.app.workspace.getRightLeaf(false).setViewState({
+    this.app.workspace.getRightLeaf(false)?.setViewState({
       type: VIEW_TYPE_INKWELL_EXPLORER,
     });
   }

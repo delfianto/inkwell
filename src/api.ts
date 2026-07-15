@@ -1,11 +1,11 @@
 import {
   decodeFlatScenes,
   encodeIndentedScenes,
-  numberScenes,
   formatSceneNumber,
   type NumberedScene,
+  numberScenes,
 } from "src/model/project-utils";
-import type { IndentedScene } from "src/model/types";
+import { type IndentedScene } from "src/model/types";
 
 /** Provides API access to useful Inkwell-specific functions. */
 export class InkwellAPI {

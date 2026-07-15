@@ -1,7 +1,11 @@
+import {
+  type CompileContext,
+  CompileStepKind,
+  CompileStepOptionType,
+  makeBuiltinStep,
+} from "./abstract-compile-step";
+import { type CompileInput, type CompileSceneInput } from "..";
 import { formatSceneNumber } from "src/model/project-utils";
-import type { CompileInput, CompileSceneInput } from "..";
-import type { CompileContext } from "./abstract-compile-step";
-import { CompileStepKind, makeBuiltinStep, CompileStepOptionType } from "./abstract-compile-step";
 
 export const PrependTitleStep = makeBuiltinStep({
   id: "prepend-title",
@@ -34,10 +38,10 @@ export const PrependTitleStep = makeBuiltinStep({
 
     return sceneInputs.map((sceneInput) => {
       let title = format;
-      const regex = /\$3{(?<torepeat>.*)}/;
+      const regex = /\$3\{(?<torepeat>.*)\}/u;
       const match = format.match(regex);
       if (match) {
-        const toRepeat = match["groups"]["torepeat"] ?? "";
+        const toRepeat = match.groups?.["torepeat"] ?? "";
         title = title.replace(regex, toRepeat.repeat((sceneInput.indentationLevel ?? -1) + 1));
       }
       title = title.replace("$1", sceneInput.name);
@@ -47,10 +51,7 @@ export const PrependTitleStep = makeBuiltinStep({
       }
 
       const contents = `${title}${separator}${sceneInput.contents}`;
-      return {
-        ...sceneInput,
-        contents,
-      };
+      return Object.assign(sceneInput, { contents });
     });
   },
 });

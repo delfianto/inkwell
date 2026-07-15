@@ -1,27 +1,25 @@
 import {
-  normalizePath,
-  TFile,
   type App,
   type CachedMetadata,
   type EventRef,
   type MetadataCache,
+  normalizePath,
+  TFile,
   type Vault,
 } from "obsidian";
-import { get, type Unsubscriber } from "svelte/store";
-
-import { deepEqual } from "src/lib/deep-equal";
-
-import { EBOOK_STRING_KEYS, type EbookMetadata, type Project } from "./types";
-import { projects as projectsStore, selectedProjectPath, updateScenesProject } from "./stores";
 import { decodeFlatScenes, setProjectFrontmatter } from "src/model/project-utils";
-import { fileNameFromPath } from "src/lib/path";
+import { EBOOK_STRING_KEYS, type EbookMetadata, type Project } from "./types";
 import { findScene, sceneFolderPath } from "./scene-navigation";
+import { get, type Unsubscriber } from "svelte/store";
+import { projects as projectsStore, selectedProjectPath, updateScenesProject } from "./stores";
+import { deepEqual } from "src/lib/deep-equal";
+import { fileNameFromPath } from "src/lib/path";
 import { SyncWaiter } from "./sync-waiter";
 
-type FileWithMetadata = {
+interface FileWithMetadata {
   file: TFile;
   metadata: CachedMetadata;
-};
+}
 
 export function resolveIfInkwellFile(
   metadataCache: MetadataCache,
@@ -29,7 +27,7 @@ export function resolveIfInkwellFile(
 ): FileWithMetadata | null {
   const metadata = metadataCache.getFileCache(file);
   const format = metadata?.frontmatter?.["inkwell"];
-  if (format === "scenes" || format === "single") {
+  if (metadata && (format === "scenes" || format === "single")) {
     return { file, metadata };
   }
   return null;
@@ -62,7 +60,7 @@ export class ProjectStoreSync {
   private lastKnownProjectsByPath: Record<string, Project> = {};
   private unsubscribers: Unsubscriber[] = [];
 
-  private pathsToIgnoreNextChange: Set<string> = new Set();
+  private pathsToIgnoreNextChange = new Set<string>();
 
   constructor(app: App, registerEvent: (ref: EventRef) => void) {
     this.app = app;
@@ -90,7 +88,7 @@ export class ProjectStoreSync {
   }
 
   async discoverProjects() {
-    const start = new Date().getTime();
+    const start = Date.now();
 
     const files = this.vault.getMarkdownFiles();
     const resolvedFiles = files.map((f) => resolveIfInkwellFile(this.metadataCache, f));
@@ -124,7 +122,7 @@ export class ProjectStoreSync {
 
     console.log(
       `[Inkwell] Loaded and watching projects. Found ${projectFiles.length} projects in ${
-        (new Date().getTime() - start) / 1000.0
+        (Date.now() - start) / 1000
       }s.`,
     );
 
@@ -137,9 +135,7 @@ export class ProjectStoreSync {
     const stillExists = currentPath !== null && projects.some((p) => p.vaultPath === currentPath);
     if (stillExists) return;
     // Sort by title so the auto-pick matches the picker's alphabetical order.
-    const first = [...projects].sort((a, b) =>
-      a.title < b.title ? -1 : a.title > b.title ? 1 : 0,
-    )[0];
+    const [first] = [...projects].toSorted(compareProjectsByTitle);
     selectedProjectPath.set(first.vaultPath);
   }
 
@@ -164,7 +160,7 @@ export class ProjectStoreSync {
       this.lastKnownProjectsByPath[project.vaultPath] = project;
       projectsStore.update((ps) => {
         const idx = ps.findIndex((p) => p.vaultPath === project.vaultPath);
-        if (idx < 0) {
+        if (idx === -1) {
           ps.push(project);
         } else {
           ps[idx] = project;
@@ -174,14 +170,14 @@ export class ProjectStoreSync {
     }
   }
 
-  async fileCreated(file: TFile) {
+  fileCreated(file: TFile): void {
     const owner = this.findOwningSceneFolder(file, get(projectsStore));
     if (owner) {
       this.addUnknownSceneFile(owner.vaultPath, file.basename);
     }
   }
 
-  async fileDeleted(file: TFile) {
+  fileDeleted(file: TFile): void {
     const ps = get(projectsStore);
     if (this.removeProjectByPath(file.path)) return;
 
@@ -199,7 +195,7 @@ export class ProjectStoreSync {
     }
   }
 
-  async fileRenamed(file: TFile, oldPath: string) {
+  fileRenamed(file: TFile, oldPath: string): void {
     if (this.renameProjectInStore(oldPath, file.path)) return;
 
     const ps = get(projectsStore);
@@ -207,7 +203,7 @@ export class ProjectStoreSync {
     const foundOld = findScene(oldPath, ps);
     const oldParent = oldPath.split("/").slice(0, -1).join("/");
 
-    if (foundOld && oldParent === file.parent.path) {
+    if (foundOld && oldParent === file.parent?.path) {
       // In-place rename within the same scene folder.
       this.renameSceneInProject(foundOld.project.vaultPath, foundOld.index, newTitle);
       return;
@@ -226,7 +222,7 @@ export class ProjectStoreSync {
 
     // File moved into a known project's scene folder.
     const newOwner = ps.find(
-      (p) => p.format === "scenes" && sceneFolderPath(p, this.vault) === file.parent.path,
+      (p) => p.format === "scenes" && sceneFolderPath(p, this.vault) === file.parent?.path,
     );
     if (newOwner) {
       this.addUnknownSceneFile(newOwner.vaultPath, file.basename);
@@ -236,11 +232,10 @@ export class ProjectStoreSync {
   // ---- Intent-named private operations used by the file event handlers. ----
 
   private findOwningSceneFolder(file: TFile, ps: Project[]): Project | undefined {
-    const sceneFolder = file.parent.path;
+    const sceneFolder = file.parent?.path;
     return ps.find((p) => {
       if (p.format !== "scenes") return false;
-      const parentPath = this.vault.getAbstractFileByPath(p.vaultPath).parent.path;
-      const targetPath = normalizePath(`${parentPath}/${p.sceneFolder}`);
+      const targetPath = sceneFolderPath(p, this.vault);
       return targetPath === sceneFolder && !p.scenes.map((s) => s.title).contains(file.basename);
     });
   }
@@ -279,7 +274,7 @@ export class ProjectStoreSync {
   private renameProjectInStore(oldPath: string, newPath: string): boolean {
     const ps = get(projectsStore);
     const idx = ps.findIndex((p) => p.vaultPath === oldPath);
-    if (idx < 0) return false;
+    if (idx === -1) return false;
     projectsStore.update((all) => {
       const p = all[idx];
       p.vaultPath = newPath;
@@ -347,27 +342,28 @@ export class ProjectStoreSync {
         ? fm["ignoredFiles"].filter((v: unknown): v is string => typeof v === "string")
         : [];
       const normalizedSceneFolder = normalizePath(
-        `${fileWithMetadata.file.parent.path}/${sceneFolder}`,
+        `${fileWithMetadata.file.parent?.path ?? ""}/${sceneFolder}`,
       );
 
       let filenamesInSceneFolder: string[] = [];
       if (await this.vault.adapter.exists(normalizedSceneFolder)) {
-        filenamesInSceneFolder = (await this.vault.adapter.list(normalizedSceneFolder)).files
+        const listing = await this.vault.adapter.list(normalizedSceneFolder);
+        filenamesInSceneFolder = listing.files
           .filter((f) => f !== fileWithMetadata.file.path && f.endsWith(".md"))
           .map((f) => this.vault.getAbstractFileByPath(f)?.name.slice(0, -3))
           .filter((maybeName) => maybeName !== null && maybeName !== undefined) as string[];
       }
 
-      const knownScenes = scenes.filter(({ title }) => filenamesInSceneFolder.contains(title));
+      const knownScenes = scenes.filter(({ title: sceneTitle }) =>
+        filenamesInSceneFolder.contains(sceneTitle),
+      );
       const dirty = knownScenes.length !== scenes.length;
 
       const sceneTitles = new Set(scenes.map((s) => s.title));
       const newScenes = filenamesInSceneFolder.filter((s) => !sceneTitles.has(s));
 
-      const ignoredRegexes = ignoredFiles.filter((n) => n).map((p) => ignoredPatternToRegex(p));
-      const unknownFiles = newScenes.filter(
-        (s) => ignoredRegexes.find((r) => r.test(s)) === undefined,
-      );
+      const ignoredRegexes = ignoredFiles.filter(Boolean).map((p) => ignoredPatternToRegex(p));
+      const unknownFiles = newScenes.filter((s) => !ignoredRegexes.some((r) => r.test(s)));
 
       return {
         project: {
@@ -432,15 +428,22 @@ function readEbookMetadata(fm: Record<string, any>): EbookMetadata {
   return ebook;
 }
 
-const ESCAPED_CHARACTERS = new Set("/&$^+.()=!|[]{},".split(""));
+function compareProjectsByTitle(a: Project, b: Project): number {
+  if (a.title < b.title) return -1;
+  if (a.title > b.title) return 1;
+  return 0;
+}
+
+// Only regex-special characters need escaping; escaping the rest (e.g. `&`,
+// `,`, `=`, `!`) would emit invalid escapes under the /u flag while matching
+// exactly the same literal character.
+const ESCAPED_CHARACTERS = new Set("/$^+.()|[]{}");
 function ignoredPatternToRegex(pattern: string): RegExp {
   let regex = "";
 
-  for (let index = 0; index < pattern.length; index++) {
-    const c = pattern[index];
-
+  for (const c of pattern) {
     if (ESCAPED_CHARACTERS.has(c)) {
-      regex += "\\" + c;
+      regex += `\\${c}`;
     } else if (c === "*") {
       regex += ".*";
     } else if (c === "?") {
@@ -450,5 +453,5 @@ function ignoredPatternToRegex(pattern: string): RegExp {
     }
   }
 
-  return new RegExp(`^${regex}$`);
+  return new RegExp(`^${regex}$`, "u");
 }

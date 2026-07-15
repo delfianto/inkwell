@@ -1,20 +1,25 @@
-import { get } from "svelte/store";
-import { Notice } from "obsidian";
-
-import type { CommandBuilder } from "./types";
+import { calculateWorkflow, compile, type CompileStatus, WorkflowError } from "src/compile";
 import { currentWorkflow, projectsByTitle, selectedProject, workflows } from "src/model/stores";
-import { WorkflowError, calculateWorkflow, compile, type CompileStatus } from "src/compile";
+import { type CommandBuilder } from "./types";
+import { get } from "svelte/store";
 import { JumpModal } from "./helpers";
-import type { Project } from "src/model/types";
+import { Notice } from "obsidian";
+import { type Project } from "src/model/types";
+
+function onCompileStatusChange(status: CompileStatus): void {
+  if (status.kind === "CompileStatusSuccess") {
+    new Notice("Compile complete.");
+  }
+}
 
 export const compileCurrent: CommandBuilder = (plugin) => ({
   id: "inkwell-compile-current",
   name: "Compile current project with current workflow",
-  checkCallback: (checking: boolean) => {
+  checkCallback: (checking: boolean): boolean | void => {
     const project = get(selectedProject);
     const workflow = get(currentWorkflow);
     if (checking) {
-      return !!project && !!workflow;
+      return Boolean(project) && Boolean(workflow);
     }
     if (!project || !workflow) {
       return;
@@ -26,12 +31,6 @@ export const compileCurrent: CommandBuilder = (plugin) => ({
       return;
     }
 
-    function onCompileStatusChange(status: CompileStatus) {
-      if (status.kind == "CompileStatusSuccess") {
-        new Notice("Compile complete.");
-      }
-    }
-
     compile(plugin.app, project, workflow, calculatedKinds, onCompileStatusChange);
   },
 });
@@ -39,7 +38,7 @@ export const compileCurrent: CommandBuilder = (plugin) => ({
 export const compileSelection: CommandBuilder = (plugin) => ({
   id: "inkwell-compile-selection",
   name: "Compile project…",
-  checkCallback: (checking: boolean) => {
+  checkCallback: (checking: boolean): boolean | void => {
     const allProjects = get(projectsByTitle);
     const projectTitles = Object.keys(allProjects);
     if (checking) {
@@ -81,12 +80,6 @@ export const compileSelection: CommandBuilder = (plugin) => ({
             if (validation.error !== WorkflowError.Valid) {
               new Notice(validation.error);
               return;
-            }
-
-            function onCompileStatusChange(status: CompileStatus) {
-              if (status.kind == "CompileStatusSuccess") {
-                new Notice("Compile complete.");
-              }
             }
 
             compile(plugin.app, project, workflow, calculatedKinds, onCompileStatusChange);

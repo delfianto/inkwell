@@ -4,8 +4,9 @@
     let initialIndent = 0;
     let currentIndent = 0;
     let initialX = 0;
-    let dragID: string = null;
+    let dragID: string | null = null;
 
+    // eslint-disable-next-line unicorn/consistent-function-scoping -- Sortable.js plugin constructor; its prototype methods close over the drag state above
     function Indent(this: { defaults: { indentWidth: number; onIndentChange: () => void } }) {
       this.defaults = {
         indentWidth: 32,
@@ -16,7 +17,7 @@
     Indent.prototype = {
       dragStart(e: any) {
         initialX = e.originalEvent.x;
-        initialIndent = Number.parseInt(e.dragEl.dataset["indent"] ?? "", 10) || 0;
+        initialIndent = Math.trunc(Number(e.dragEl.dataset["indent"] ?? "")) || 0;
         currentIndent = initialIndent;
         dragID = e.dragEl.dataset["id"];
       },
@@ -46,15 +47,14 @@
     });
   }
 
-  // @ts-ignore
+  // @ts-expect-error - Sortable's mount typing does not cover custom plugins
   Sortable.mount(new IndentPlugin());
 </script>
 
-<script lang="ts" generics="T extends { id: string; indent?: number; [key: string]: unknown }">
-  import type { Snippet } from "svelte";
-  import type SortableType from "sortablejs";
+<script lang="ts" generics="T extends { id: string; indent?: number }">
+  import { onMount, type Snippet } from "svelte";
   import Sortable from "sortablejs/modular/sortable.core.esm.js";
-  import { onMount } from "svelte";
+  import type SortableType from "sortablejs";
 
   interface Props {
     items?: T[];
@@ -71,7 +71,7 @@
     class?: string;
   }
 
-  let {
+  const {
     items = $bindable([]),
     sortableOptions = {},
     trackIndents = false,
@@ -81,12 +81,14 @@
     class: className,
   }: Props = $props();
 
-  let listElement: HTMLElement = $state(null);
+  let listElement: HTMLElement | null = $state(null);
 
   onMount(() => {
-    const opts: SortableType.Options = Object.assign(
-      {
-        indent: trackIndents,
+    const opts: SortableType.Options & {
+      indent?: boolean;
+      onIndentChange?: (id: string, index: number, indent: number, width: number) => void;
+    } = {
+      indent: trackIndents,
         onIndentChange: (
           itemID: string,
           itemIndex: number,
@@ -99,11 +101,10 @@
         },
         delayOnTouchOnly: true,
         delay: 400,
-      },
-      sortableOptions
-    );
+      ...sortableOptions
+    };
 
-    opts.store = opts.store || {
+    opts.store ||= {
       set: () => {},
       get: (sortable: SortableType) => sortable.toArray(),
     };
@@ -111,12 +112,15 @@
     opts.store.set = (sortable: SortableType) => {
       const sortedItems = sortable
         .toArray()
-        .map((k) => items.find((i) => i.id === k));
+        .map((k) => items.find((i) => i.id === k))
+        .filter((i): i is T => i !== undefined);
       onorderChanged?.(sortedItems);
       oldStoreSet(sortable);
     };
 
-    Sortable.create(listElement, opts);
+    if (listElement) {
+      Sortable.create(listElement, opts);
+    }
   });
 </script>
 

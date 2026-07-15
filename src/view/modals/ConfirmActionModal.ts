@@ -1,8 +1,15 @@
-import { App, Modal, ButtonComponent } from "obsidian";
-import type InkwellPlugin from "src/main";
+import { type App, ButtonComponent, Modal } from "obsidian";
+
+export interface ConfirmActionOptions {
+  title: string;
+  explanation: string;
+  yesText: string;
+  yesAction: () => void;
+  noText?: string;
+  noAction?: () => void;
+}
 
 export default class ConfirmActionModal extends Modal {
-  plugin: InkwellPlugin;
   title: string;
   explanation: string;
   yesText: string;
@@ -10,25 +17,17 @@ export default class ConfirmActionModal extends Modal {
   noText: string;
   noAction: () => void;
 
-  constructor(
-    app: App,
-    title: string,
-    explanation: string,
-    yesText: string,
-    yesAction: () => void,
-    noText = "Cancel",
-    noAction: () => void = () => this.close(),
-  ) {
+  constructor(app: App, options: ConfirmActionOptions) {
     super(app);
-    this.title = title;
-    this.explanation = explanation;
-    this.yesText = yesText;
-    this.yesAction = yesAction;
-    this.noText = noText;
-    this.noAction = noAction;
+    this.title = options.title;
+    this.explanation = options.explanation;
+    this.yesText = options.yesText;
+    this.yesAction = options.yesAction;
+    this.noText = options.noText ?? "Cancel";
+    this.noAction = options.noAction ?? (() => this.close());
   }
 
-  onOpen(): void {
+  override onOpen(): void {
     const { contentEl } = this;
 
     contentEl.createEl("h1", { text: this.title });
@@ -43,7 +42,7 @@ export default class ConfirmActionModal extends Modal {
       });
   }
 
-  onClose(): void {
+  override onClose(): void {
     const { contentEl } = this;
     contentEl.empty();
   }

@@ -1,12 +1,11 @@
-import type { TFile } from "obsidian";
-
+import { type Project, type ProjectWordCounts } from "./types";
 import { fileNameFromPath } from "src/lib/path";
-import type { Project, ProjectWordCounts } from "./types";
+import { type TFile } from "obsidian";
 
-export type SceneWordStats = {
+export interface SceneWordStats {
   scene: number;
   project: number;
-};
+}
 
 export function statsForScene(
   activeFile: TFile | null,
@@ -18,12 +17,15 @@ export function statsForScene(
     return null;
   }
 
-  const projectTotal =
-    typeof count === "number"
-      ? count
-      : typeof count === "object"
-        ? Object.values(count as Record<string, number>).reduce((total, n) => total + n, 0)
-        : 0;
+  let projectTotal = 0;
+  if (typeof count === "number") {
+    projectTotal = count;
+  } else if (typeof count === "object") {
+    projectTotal = Object.values(count as Record<string, number>).reduce(
+      (total, n) => total + n,
+      0,
+    );
+  }
 
   if (project.format === "single") {
     return { scene: projectTotal, project: projectTotal };

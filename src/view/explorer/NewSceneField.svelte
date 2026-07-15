@@ -1,25 +1,28 @@
 <script lang="ts">
+  import { invalidFilenameCharacters, isValidFilename } from "../utils";
   import { getContext } from "svelte";
   import { selectedProject } from "src/model/stores";
-  import { invalidFilenameCharacters, isValidFilename } from "../utils";
 
   let newSceneName = $state("");
-  let newSceneInput: HTMLElement = $state(null);
+  let newSceneInput: HTMLElement | null = $state(null);
 
   const sceneNames =
     $selectedProject?.format === "scenes"
       ? $selectedProject.scenes.map((s) => s.title)
       : [];
 
-  let error: string | null = $derived(
-    newSceneName.length === 0
-      ? null
-      : sceneNames.contains(newSceneName)
-        ? "A scene with this name already exists in this project."
-        : !isValidFilename(newSceneName)
-          ? `A scene name cannot contain the characters: ${invalidFilenameCharacters()}`
-          : null
-  );
+  const error: string | null = $derived.by(() => {
+    if (newSceneName.length === 0) {
+      return null;
+    }
+    if (sceneNames.contains(newSceneName)) {
+      return "A scene with this name already exists in this project.";
+    }
+    if (!isValidFilename(newSceneName)) {
+      return `A scene name cannot contain the characters: ${invalidFilenameCharacters()}`;
+    }
+    return null;
+  });
 
   const onNewScene: (name: string, open: boolean) => void =
     getContext("onNewScene");
@@ -43,7 +46,7 @@
         onNewSceneEnter(!e.shiftKey);
       } else if (e.key === "Escape") {
         newSceneName = "";
-        newSceneInput.blur();
+        newSceneInput?.blur();
       }
     }}
     class:invalid={!!error}

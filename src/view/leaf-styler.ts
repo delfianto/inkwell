@@ -1,9 +1,8 @@
-import { FileView, type EventRef, type Workspace } from "obsidian";
+import { type EventRef, FileView, type Workspace } from "obsidian";
 import { get, type Unsubscriber } from "svelte/store";
-
-import { projects } from "src/model/stores";
+import { type Project } from "src/model/types";
 import { projectForPath } from "src/model/scene-navigation";
-import type { Project } from "src/model/types";
+import { projects } from "src/model/stores";
 
 const INKWELL_LEAF_CLASS = "inkwell-leaf";
 
@@ -32,13 +31,9 @@ export class LeafStyler {
 
   private styleAll(allProjects: Project[] = get(projects)) {
     this.workspace.getLeavesOfType("markdown").forEach((leaf) => {
-      if (leaf.view instanceof FileView) {
+      if (leaf.view instanceof FileView && leaf.view.file) {
         const project = projectForPath(leaf.view.file.path, allProjects);
-        if (project) {
-          leaf.view.containerEl.classList.add(INKWELL_LEAF_CLASS);
-        } else {
-          leaf.view.containerEl.classList.remove(INKWELL_LEAF_CLASS);
-        }
+        leaf.view.containerEl.classList.toggle(INKWELL_LEAF_CLASS, project !== null);
       }
 
       const leafId = leaf.id;

@@ -1,10 +1,10 @@
 <script lang="ts">
   import { setIcon } from "obsidian";
 
-  let { iconName = "" }: { iconName?: string } = $props();
+  const { iconName = "" }: { iconName?: string } = $props();
 
-  const icon = (node: HTMLElement, icon: string) => {
-    setIcon(node, icon);
+  const icon = (node: HTMLElement, name: string) => {
+    setIcon(node, name);
   };
 </script>
 

@@ -1,17 +1,18 @@
+import { type CompileStep, type Workflow } from "src/compile/steps/abstract-compile-step";
 import { derived, writable } from "svelte/store";
-
-import type {
-  InkwellPluginSettings,
-  MultipleSceneProject,
-  Project,
-  ProjectWordCounts,
+import {
+  type InkwellPluginSettings,
+  type MultipleSceneProject,
+  type Project,
+  type ProjectWordCounts,
 } from "./types";
-import type { Workflow, CompileStep } from "src/compile/steps/abstract-compile-step";
 
 // WRITEABLE STORES
 
 export const initialized = writable<boolean>(false);
-export const pluginSettings = writable<InkwellPluginSettings>(null);
+export const pluginSettings = writable<InkwellPluginSettings>(
+  null as unknown as InkwellPluginSettings,
+);
 
 /** All discovered inkwell projects. */
 export const projects = writable<Project[]>([]);
@@ -28,9 +29,11 @@ export const waitingForSync = writable<boolean>(false);
 
 /** All projects indexed by title (one project per title). */
 export const projectsByTitle = derived([projects], ([$projects]) => {
-  const sorted = [...$projects].sort((a, b) =>
-    a.title < b.title ? -1 : a.title > b.title ? 1 : 0,
-  );
+  const sorted = [...$projects].toSorted((a, b) => {
+    if (a.title < b.title) return -1;
+    if (a.title > b.title) return 1;
+    return 0;
+  });
   const result: Record<string, Project> = {};
   for (const p of sorted) {
     result[p.title] = p;
