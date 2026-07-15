@@ -1,11 +1,11 @@
-import { App, Modal, TFolder } from "obsidian";
-import { insertProjectFrontmatter } from "src/model/project-utils";
-import { selectedProjectPath } from "src/model/stores";
-import type { Project, MultipleSceneProject, SingleSceneProject } from "src/model/types";
-import { selectedTab } from "src/view/stores";
-import NewProjectModalContent from "./NewProjectModal.svelte";
-import { mount } from "svelte";
+import { type App, Modal, type TFolder } from "obsidian";
+import { type MultipleSceneProject, type Project, type SingleSceneProject } from "src/model/types";
 import { appContext } from "src/view/utils";
+import { insertProjectFrontmatter } from "src/model/project-utils";
+import { mount } from "svelte";
+import NewProjectModalContent from "./NewProjectModal.svelte";
+import { selectedProjectPath } from "src/model/stores";
+import { selectedTab } from "src/view/stores";
 
 export default class NewProjectModal extends Modal {
   private parent: TFolder;
@@ -15,7 +15,7 @@ export default class NewProjectModal extends Modal {
     this.parent = parent;
   }
 
-  onOpen(): void {
+  override onOpen(): void {
     const { contentEl } = this;
 
     this.setTitle("Create Project");
@@ -53,17 +53,16 @@ export default class NewProjectModal extends Modal {
               ebook: {},
             };
             return multi;
-          } else {
-            const single: SingleSceneProject = {
-              format: "single",
-              title,
-              titleInFrontmatter: true,
-              vaultPath: path,
-              workflow: null,
-              ebook: {},
-            };
-            return single;
           }
+          const single: SingleSceneProject = {
+            format: "single",
+            title,
+            titleInFrontmatter: true,
+            vaultPath: path,
+            workflow: null,
+            ebook: {},
+          };
+          return single;
         })();
 
         await insertProjectFrontmatter(this.app, path, newProject);
@@ -85,7 +84,7 @@ export default class NewProjectModal extends Modal {
     });
   }
 
-  onClose(): void {
+  override onClose(): void {
     const { contentEl } = this;
     contentEl.empty();
   }

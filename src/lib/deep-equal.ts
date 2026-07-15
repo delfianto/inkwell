@@ -7,7 +7,9 @@
 export function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   // Treat NaN as equal to itself, matching lodash `isEqual`.
-  if (a !== a && b !== b) return true;
+  if (typeof a === "number" && Number.isNaN(a) && typeof b === "number" && Number.isNaN(b)) {
+    return true;
+  }
   if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) {
     return false;
   }
@@ -27,7 +29,5 @@ export function deepEqual(a: unknown, b: unknown): boolean {
   const keysA = Object.keys(objA);
   const keysB = Object.keys(objB);
   if (keysA.length !== keysB.length) return false;
-  return keysA.every(
-    (key) => Object.prototype.hasOwnProperty.call(objB, key) && deepEqual(objA[key], objB[key]),
-  );
+  return keysA.every((key) => Object.hasOwn(objB, key) && deepEqual(objA[key], objB[key]));
 }

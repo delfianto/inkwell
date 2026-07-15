@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { normalizePath } from "obsidian";
-  import { projectFolderPath } from "src/model/scene-navigation";
   import {
     projects,
     selectedProject,
@@ -8,11 +6,13 @@
     updateProject,
     updateScenesProject,
   } from "src/model/stores";
-  import type { EbookStringKey } from "src/model/types";
-  import { onMount } from "svelte";
   import Disclosure from "../components/Disclosure.svelte";
+  import { type EbookStringKey } from "src/model/types";
   import { FileSuggest } from "../settings/file-suggest";
   import { FolderSuggest } from "../settings/folder-suggest";
+  import { normalizePath } from "obsidian";
+  import { onMount } from "svelte";
+  import { projectFolderPath } from "src/model/scene-navigation";
   import { selectedProjectWordCountStatus } from "../stores";
   import { useApp } from "../utils";
 
@@ -28,13 +28,13 @@
       const currentIndex = _projects.findIndex(
         (p) => p.vaultPath === $selectedProjectPath
       );
-      if (currentIndex >= 0) {
+      if (currentIndex !== -1) {
         const current = _projects[currentIndex];
         const currentTitle = current.title;
         let titleInFrontmatter = true;
 
         if (newTitle.length === 0) {
-          newTitle = $selectedProjectPath.split("/").at(-1).replace(/\.md$/, "");
+          newTitle = $selectedProjectPath!.split("/").at(-1)!.replace(/\.md$/u, "");
           titleInFrontmatter = false;
         }
 
@@ -50,10 +50,10 @@
     });
   }
 
-  let sceneFolderInput: HTMLInputElement = $state(null);
+  let sceneFolderInput: HTMLInputElement | null = $state(null);
   onMount(() => {
-    if (sceneFolderInput && $selectedProject.format === "scenes") {
-      const projectPath = projectFolderPath($selectedProject, app.vault);
+    if (sceneFolderInput && $selectedProject!.format === "scenes") {
+      const projectPath = projectFolderPath($selectedProject!, app.vault);
       new FolderSuggest(app, sceneFolderInput, projectPath);
     }
   });
@@ -63,25 +63,25 @@
     if (newFolder.length <= 0 || !$selectedProject) {
       return;
     }
-    const root = app.vault.getAbstractFileByPath($selectedProject.vaultPath)
-      .parent.path;
+    const root = app.vault.getAbstractFileByPath($selectedProject.vaultPath)!
+      .parent!.path;
     const path = normalizePath(`${root}/${newFolder}`);
     const exists = await app.vault.adapter.exists(path);
     if (exists) {
-      updateScenesProject($selectedProjectPath, (p) => {
+      updateScenesProject($selectedProjectPath!, (p) => {
         p.sceneFolder = newFolder;
       });
     }
   }
 
-  let sceneTemplateInput: HTMLInputElement = $state(null);
+  let sceneTemplateInput: HTMLInputElement | null = $state(null);
   onMount(() => {
-    if (sceneTemplateInput && $selectedProject.format === "scenes") {
+    if (sceneTemplateInput && $selectedProject!.format === "scenes") {
       new FileSuggest(app, sceneTemplateInput);
     }
   });
   async function sceneTemplateChanged(event: Event) {
-    let newTemplate = (event.target as HTMLInputElement).value;
+    let newTemplate: string | null = (event.target as HTMLInputElement).value;
     if (!$selectedProject) {
       return;
     }
@@ -93,7 +93,7 @@
     }
 
     if (exists) {
-      updateScenesProject($selectedProjectPath, (p) => {
+      updateScenesProject($selectedProjectPath!, (p) => {
         p.sceneTemplate = newTemplate;
       });
     }
@@ -162,7 +162,7 @@
     });
   }
 
-  let coverInput: HTMLInputElement = $state(null);
+  let coverInput: HTMLInputElement | null = $state(null);
   let coverSuggestEl: HTMLInputElement | null = null;
   // The cover input lives inside `{#if showEbook}` (collapsed by default), so
   // it does not exist at mount time. Bind FileSuggest the first time the input
@@ -174,8 +174,8 @@
     }
   });
 
-  let ebook = $derived($selectedProject?.ebook ?? {});
-  let subjectsText = $derived(
+  const ebook = $derived($selectedProject?.ebook ?? {});
+  const subjectsText = $derived(
     Array.isArray(ebook.subjects) ? ebook.subjects.join(", ") : ""
   );
 
@@ -186,7 +186,7 @@
     if ($selectedProjectWordCountStatus) {
       const { scene, project } = $selectedProjectWordCountStatus;
       projectCount = project;
-      sceneCount = $selectedProject.format === "scenes" ? scene : null;
+      sceneCount = $selectedProject!.format === "scenes" ? scene : null;
     }
   });
 
@@ -202,9 +202,9 @@
       return `${count.toLocaleString()} ${noun}`;
     } else if (pluralNoun) {
       return `${count.toLocaleString()} ${pluralNoun}`;
-    } else {
-      return `${count.toLocaleString()} ${noun}s`;
     }
+      return `${count.toLocaleString()} ${noun}s`;
+    
   }
 </script>
 

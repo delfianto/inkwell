@@ -1,10 +1,10 @@
 import {
-  CompileStepKind,
-  CompileStepOptionType,
-  makeBuiltinStep,
   type CompileContext,
   type CompileInput,
   type CompileManuscriptInput,
+  CompileStepKind,
+  CompileStepOptionType,
+  makeBuiltinStep,
 } from "./abstract-compile-step";
 
 export const AddFrontmatterStep = makeBuiltinStep({

@@ -2,20 +2,31 @@
   /* Note: VSCode doesn't love the use of generics + snippets here.
      It's valid svelte and doesn't typeerror on compile.
   */
-  import type Sortable from "sortablejs";
+  import {
+    activeFile,
+    addAll,
+    addScene,
+    ignoreAll,
+    ignoreScene,
+    selectElementContents,
+    type UndoManager,
+    useApp,
+  } from "src/view";
+  import {
+    formatSceneNumber,
+    type IndentedScene,
+    type MultipleSceneProject,
+    numberScenes,
+    pluginSettings,
+    projects,
+    scenePath,
+    selectedProject,
+  } from "src/model";
   import { getContext, onDestroy } from "svelte";
-  import { Keymap, Notice, Platform, type PaneType, TFile } from "obsidian";
-
-  import { activeFile } from "../stores";
-  import { projects, pluginSettings, selectedProject } from "src/model/stores";
-  import SortableList from "../sortable/SortableList.svelte";
-  import type { IndentedScene, MultipleSceneProject } from "src/model/types";
+  import { Keymap, Notice, type PaneType, Platform, TFile } from "obsidian";
   import Disclosure from "../components/Disclosure.svelte";
-  import { formatSceneNumber, numberScenes } from "src/model/project-utils";
-  import type { UndoManager } from "src/view/undo-manager";
-  import { scenePath } from "src/model/scene-navigation";
-  import { selectElementContents, useApp } from "../utils";
-  import { addAll, addScene, ignoreAll, ignoreScene } from "./scene-menu-items";
+  import type Sortable from "sortablejs";
+  import SortableList from "../sortable/SortableList.svelte";
 
   const app = useApp();
 
@@ -31,7 +42,7 @@
   const makeScenePath: (project: MultipleSceneProject, scene: string) => string =
     getContext("makeScenePath");
 
-  type SceneItem = {
+  interface SceneItem {
     id: string;
     name: string;
     displayName: string;
@@ -41,7 +52,7 @@
     hidden: boolean;
     numbering: number[];
     status: string | undefined;
-  };
+  }
 
   let collapsedItems: string[] = $state([]);
   // Bumped on every metadata-changed event so $derived items re-runs and
@@ -56,7 +67,7 @@
 
   let ghostIndent = $state(0);
   let draggingIndent = $state(0);
-  let draggingID: string = $state(null);
+  let draggingID: string | null = $state(null);
 
   function itemsFromScenes(
     indentedScenes: IndentedScene[],
@@ -81,7 +92,7 @@
       const nextScene = index < scenes.length - 1 ? scenes[index + 1] : false;
       const path = makeScenePath($selectedProject as MultipleSceneProject, title);
       const file = app.vault.getAbstractFileByPath(path);
-      let status = undefined;
+      let status;
       let displayName = title;
       if (file && file instanceof TFile) {
         const metadata = app.metadataCache.getFileCache(file);
@@ -117,7 +128,7 @@
   // metadata events.
   const metadataEventRef = app.metadataCache.on("changed", (file: TFile) => {
     if (file && file.extension === "md") {
-      metadataTick = metadataTick + 1;
+      metadataTick += 1;
     }
   });
   onDestroy(() => app.metadataCache.offref(metadataEventRef));
@@ -138,7 +149,7 @@
   };
 
   function itemOrderChanged(newItems: SceneItem[]) {
-    if (currentProjectIndex >= 0 && $selectedProject.format === "scenes") {
+    if (currentProjectIndex >= 0 && $selectedProject!.format === "scenes") {
       const scenes: IndentedScene[] = newItems.map((d) => ({
         title: d.name,
         indent: d.name === draggingID ? draggingIndent : d.indent,
@@ -172,11 +183,9 @@
   }
 
   function collapseItem(itemID: string) {
-    if (!collapsedItems.contains(itemID)) {
-      collapsedItems = [...collapsedItems, itemID];
-    } else {
-      collapsedItems = collapsedItems.filter((i) => i !== itemID);
-    }
+    collapsedItems = collapsedItems.contains(itemID)
+      ? collapsedItems.filter((i) => i !== itemID)
+      : [...collapsedItems, itemID];
   }
 
   const onSceneClick: (path: string, paneType: boolean | PaneType) => void =
@@ -186,7 +195,7 @@
       if (
         Platform.isMobile &&
         item.collapsible &&
-        item.path === $activeFile.path
+        item.path === $activeFile!.path
       ) {
         collapseItem(item.id);
       } else {
@@ -210,7 +219,7 @@
     }
     const { x, y } = event;
     let element = document.elementFromPoint(x, y);
-    if (element.id.startsWith("inkwell-scene-")) {
+    if (element?.id.startsWith("inkwell-scene-")) {
       element = element.parentElement;
     }
     const sPath =
@@ -221,14 +230,14 @@
     onContextClick(sPath, x, y, () => {
       if (element && element instanceof HTMLElement) {
         const path = element.dataset.scenePath;
-        editingPath = path;
+        editingPath = path ?? null;
         const innerElement = activeDocument.querySelector(
           `[data-item-path='${path}']`
         );
         if (!(innerElement instanceof HTMLElement)) {
           return;
         }
-        originalName = innerElement.dataset.itemName;
+        originalName = innerElement.dataset.itemName ?? null;
         setTimeout(() => selectElementContents(innerElement), 0);
       }
     });
@@ -238,13 +247,13 @@
     if (
       editingPath &&
       event.target instanceof HTMLElement &&
-      $selectedProject.format === "scenes"
+      $selectedProject!.format === "scenes"
     ) {
-      const newName = event.target.innerText;
+      const newName = event.target.textContent;
       if (event.key === "Enter") {
-        const newPath = scenePath(newName, $selectedProject, app.vault);
+        const newPath = scenePath(newName, $selectedProject!, app.vault);
         const file = app.vault.getAbstractFileByPath(editingPath);
-        app.fileManager.renameFile(file, newPath);
+        app.fileManager.renameFile(file!, newPath);
         editingPath = null;
         originalName = null;
         return false;
@@ -258,7 +267,7 @@
 
   function onBlur(event: FocusEvent) {
     if (event.target instanceof HTMLElement) {
-      event.target.innerText = originalName;
+      event.target.textContent = originalName;
     }
     editingPath = null;
     originalName = null;
@@ -293,11 +302,10 @@
 
   undoManager.on((type, _evt, _ctx) => {
     const oldIndex = undoIndex;
-    if (type === "undo") {
-      undoIndex = Math.max(Math.min(undoIndex + 1, sceneHistory.length - 1), 0);
-    } else {
-      undoIndex = Math.max(undoIndex - 1, 0);
-    }
+    undoIndex =
+      type === "undo"
+        ? Math.max(Math.min(undoIndex + 1, sceneHistory.length - 1), 0)
+        : Math.max(undoIndex - 1, 0);
     const newValue = sceneHistory[undoIndex];
     if (
       oldIndex !== undoIndex &&

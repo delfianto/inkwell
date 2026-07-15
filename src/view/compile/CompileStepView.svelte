@@ -1,5 +1,4 @@
 <script lang="ts">
-  // @ts-nocheck
   import {
     type CompileStep,
     CompileStepKind,
@@ -10,7 +9,7 @@
   } from "src/compile/steps/abstract-compile-step";
   import Icon from "../components/Icon.svelte";
 
-  let {
+  const {
     step,
     ordinal,
     calculatedKind,
@@ -76,7 +75,7 @@
                 <input
                   id={step.id + "-" + option.id}
                   type="text"
-                  placeholder={option.default.replace(/\n/g, "\\n")}
+                  placeholder={String(option.default).replace(/\n/gu, "\\n")}
                   bind:value={step.optionValues[option.id]}
                 />
               {:else if option.type === CompileStepOptionType.MultilineText}
@@ -91,7 +90,10 @@
                   <input
                     id={step.id + "-" + option.id}
                     type="checkbox"
-                    bind:checked={step.optionValues[option.id]}
+                    bind:checked={
+                      () => Boolean(step.optionValues[option.id]),
+                      (v) => (step.optionValues[option.id] = v)
+                    }
                   />
                   <label for={step.id + "-" + option.id}>{option.name}</label>
                 </div>

@@ -1,12 +1,13 @@
+import { type MultipleSceneProject, type Project } from "./types";
 import { normalizePath, type Vault } from "obsidian";
-import type { Project, MultipleSceneProject } from "./types";
 
 export function projectFolderPath(project: Project, vault: Vault): string {
-  return vault.getAbstractFileByPath(project.vaultPath).parent.path;
+  const file = vault.getAbstractFileByPath(project.vaultPath);
+  return file?.parent?.path ?? "";
 }
 
 export function sceneFolderPath(project: MultipleSceneProject, vault: Vault): string {
-  const root = vault.getAbstractFileByPath(project.vaultPath).parent.path;
+  const root = projectFolderPath(project, vault);
   return normalizePath(`${root}/${project.sceneFolder}`);
 }
 
@@ -19,11 +20,11 @@ export function scenePath(sceneName: string, project: MultipleSceneProject, vaul
   return scenePathForFolder(sceneName, sceneFolder);
 }
 
-export type SceneFinding = {
+export interface SceneFinding {
   project: Project;
   index: number;
   currentIndent: number;
-};
+}
 
 export function findScene(path: string, projects: Project[]): SceneFinding | null {
   for (const project of projects) {
@@ -35,7 +36,7 @@ export function findScene(path: string, projects: Project[]): SceneFinding | nul
       const index = project.scenes.findIndex(
         (s) => normalizePath(`${parentPath}/${project.sceneFolder}/${s.title}.md`) === path,
       );
-      if (index >= 0) {
+      if (index !== -1) {
         return { project, index, currentIndent: project.scenes[index].indent };
       }
     }
@@ -47,20 +48,19 @@ export function projectForPath(path: string, projects: Project[]): Project | nul
   for (const project of projects) {
     if (project.vaultPath === path) {
       return project;
-    } else {
-      const found = findScene(path, projects);
-      if (found) {
-        return found.project;
-      }
+    }
+    const found = findScene(path, projects);
+    if (found) {
+      return found.project;
     }
   }
   return null;
 }
 
-export type SceneNavigationLocation = {
+export interface SceneNavigationLocation {
   position: "next" | "previous";
   maintainIndent: boolean;
-};
+}
 
 export function scenePathForLocation(
   location: SceneNavigationLocation,
@@ -70,30 +70,27 @@ export function scenePathForLocation(
 ): string | null {
   for (const project of projects) {
     if (project.format === "scenes") {
-      const root = vault.getAbstractFileByPath(project.vaultPath).parent.path;
+      const root = projectFolderPath(project, vault);
       const index = project.scenes.findIndex(
         (s) => normalizePath(`${root}/${project.sceneFolder}/${s.title}.md`) === path,
       );
-      if (index >= 0) {
+      if (index !== -1) {
         if (location.position === "next" && index < project.scenes.length - 1) {
-          if (!location.maintainIndent) {
-            const nextScene = project.scenes[index + 1];
-            return normalizePath(`${root}/${project.sceneFolder}/${nextScene.title}.md`);
-          } else {
-            const indent = project.scenes[index].indent;
+          if (location.maintainIndent) {
+            const { indent } = project.scenes[index];
             const nextSceneAtIndent = project.scenes
               .slice(index + 1)
               .find((s) => s.indent === indent);
             if (nextSceneAtIndent) {
               return normalizePath(`${root}/${project.sceneFolder}/${nextSceneAtIndent.title}.md`);
             }
+          } else {
+            const nextScene = project.scenes[index + 1];
+            return normalizePath(`${root}/${project.sceneFolder}/${nextScene.title}.md`);
           }
         } else if (location.position === "previous" && index > 0) {
-          if (!location.maintainIndent) {
-            const previousScene = project.scenes[index - 1];
-            return normalizePath(`${root}/${project.sceneFolder}/${previousScene.title}.md`);
-          } else {
-            const indent = project.scenes[index].indent;
+          if (location.maintainIndent) {
+            const { indent } = project.scenes[index];
             const previousSceneAtIndent = project.scenes
               .slice(0, index)
               .find((s) => s.indent === indent);
@@ -102,6 +99,9 @@ export function scenePathForLocation(
                 `${root}/${project.sceneFolder}/${previousSceneAtIndent.title}.md`,
               );
             }
+          } else {
+            const previousScene = project.scenes[index - 1];
+            return normalizePath(`${root}/${project.sceneFolder}/${previousScene.title}.md`);
           }
         }
       }

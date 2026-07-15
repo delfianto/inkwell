@@ -1,9 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
-
-import { BUILTIN_STEPS } from "src/compile/steps";
-import { PLACEHOLDER_MISSING_STEP } from "src/compile/steps/abstract-compile-step";
 import { deserializeWorkflow, serializeWorkflow } from "src/compile/serialization";
-import type { Workflow } from "src/compile/steps/abstract-compile-step";
+import { PLACEHOLDER_MISSING_STEP, type Workflow } from "src/compile/steps/abstract-compile-step";
+import { BUILTIN_STEPS } from "src/compile/steps";
 import { userScriptSteps } from "src/model/stores";
 
 const stepById = (id: string) => {

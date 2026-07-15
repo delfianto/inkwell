@@ -1,16 +1,16 @@
 <script lang="ts">
+  import { Keymap, type PaneType } from "obsidian";
   import {
     projectsByTitle,
-    selectedProjectPath,
     selectedProject,
+    selectedProjectPath,
   } from "../../model/stores";
   import { getContext } from "svelte";
-  import { Keymap, type PaneType } from "obsidian";
 
   const openFileAtPath: (path: string, paneType: PaneType | boolean) => void =
     getContext("onSceneClick");
 
-  let projectOptions = $derived(Object.keys($projectsByTitle));
+  const projectOptions = $derived(Object.keys($projectsByTitle));
 
   function projectSelected(event: Event) {
     const title = (event.target as HTMLSelectElement).value;
@@ -26,7 +26,7 @@
   }
 
   function onProjectClick(e: MouseEvent) {
-    openFileAtPath($selectedProject.vaultPath, Keymap.isModEvent(e));
+    openFileAtPath($selectedProject!.vaultPath, Keymap.isModEvent(e));
   }
 </script>
 

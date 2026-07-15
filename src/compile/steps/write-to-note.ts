@@ -1,5 +1,5 @@
-import { App, Notice, normalizePath } from "obsidian";
-import type { CompileContext, CompileInput, CompileManuscriptInput } from "..";
+import { type App, normalizePath, Notice } from "obsidian";
+import { type CompileContext, type CompileInput, type CompileManuscriptInput } from "..";
 import { CompileStepKind, CompileStepOptionType, makeBuiltinStep } from "./abstract-compile-step";
 
 export const WriteToNoteStep = makeBuiltinStep({
@@ -28,14 +28,12 @@ export const WriteToNoteStep = makeBuiltinStep({
   },
   async compile(input: CompileInput, context: CompileContext): Promise<CompileInput> {
     const msInput = input as CompileManuscriptInput;
-    if (context.kind !== CompileStepKind.Manuscript) {
-      throw new Error("Cannot write non-manuscript as note.");
-    } else {
+    if (context.kind === CompileStepKind.Manuscript) {
       let target = context.optionValues["target"] as string;
       target = target.replace("$1", context.project.title);
 
       const openAfter = context.optionValues["open-after"] as boolean;
-      if (!target || target.length == 0) {
+      if (!target || target.length === 0) {
         throw new Error("Invalid path for Save as Note.");
       }
 
@@ -45,13 +43,16 @@ export const WriteToNoteStep = makeBuiltinStep({
       if (openAfter) {
         console.log("[Inkwell] Attempting to open:", filePath);
 
-        context.app.workspace.openLinkText(filePath, "/", true).catch((err) => {
-          console.error("[Inkwell] Could not open", filePath, err);
-        });
+        try {
+          await context.app.workspace.openLinkText(filePath, "/", true);
+        } catch (error) {
+          console.error("[Inkwell] Could not open", filePath, error);
+        }
       }
 
       return input;
     }
+    throw new Error("Cannot write non-manuscript as note.");
   },
 });
 
@@ -75,15 +76,15 @@ async function ensureContainingFolderExists(app: App, filePath: string): Promise
 }
 
 function resolvePath(projectPath: string, filePath: string): string {
-  const filename = filePath.split("/").last();
+  const filename = filePath.split("/").last() ?? "";
   if (!filename.contains(".")) {
-    filePath = filePath + ".md";
+    filePath += ".md";
   }
 
   if (!filePath.startsWith(".")) {
     if (filePath.startsWith("/")) {
       // Absolute path from vault root - strip leading slash
-      return normalizePath(filePath.substring(1));
+      return normalizePath(filePath.slice(1));
     }
     return normalizePath(`${projectPath}/${filePath}`);
   }
@@ -144,12 +145,12 @@ function resolveRelativeFilePath(
       return resolveRelativeFilePath(projectPathComponents, filePathComponents.slice(1), false);
     }
     default: {
-      const filename = filePathComponents.last();
+      const filename = filePathComponents.last() ?? "";
       if (filename.startsWith(".")) {
         new Notice("Obsidian cannot open files that begin with a dot. Consider a different name.");
       }
       // assume there are no more ".." in the rest of the filePathComponents
-      return normalizePath(projectPathComponents.concat(filePathComponents).join("/"));
+      return normalizePath([...projectPathComponents, ...filePathComponents].join("/"));
     }
   }
 }

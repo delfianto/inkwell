@@ -1,7 +1,7 @@
 <script lang="ts">
   import { type ExplorerTab, selectedTab } from "src/view/stores";
 
-  let { tab }: { tab: ExplorerTab } = $props();
+  const { tab }: { tab: ExplorerTab } = $props();
 </script>
 
 <button

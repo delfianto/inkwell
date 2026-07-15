@@ -1,19 +1,19 @@
 import { compileCurrent, compileSelection } from "./compile";
 import {
   focusCurrentProject,
-  previousScene,
-  previousSceneAtIndent,
+  focusNewSceneField,
+  jumpToProject,
+  jumpToScene,
   nextScene,
   nextSceneAtIndent,
-  jumpToProject,
-  showInkwell,
-  jumpToScene,
+  previousScene,
+  previousSceneAtIndent,
   revealProjectFolder,
-  focusNewSceneField,
+  showInkwell,
 } from "./navigation";
 import { indentScene, unindentScene } from "./indentation";
-import type InkwellPlugin from "src/main";
 import { insertMultiSceneTemplate, insertSingleSceneTemplate } from "./templates";
+import type InkwellPlugin from "src/main";
 
 const commandBuilders = [
   compileCurrent,

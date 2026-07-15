@@ -5,17 +5,17 @@
 // Only the fields actually consumed by the codebase are declared; expand as
 // needed.
 
-import "obsidian";
+import { type TAbstractFile, type TFile, type TFolder } from "obsidian";
 
 declare module "obsidian" {
   interface App {
     plugins: {
-      getPlugin(id: "templater-obsidian"): TemplaterPlugin | null;
-      getPlugin(id: string): unknown | null;
+      getPlugin: ((id: "templater-obsidian") => TemplaterPlugin | null) &
+        ((id: string) => unknown | null);
     };
     internalPlugins: {
-      getEnabledPluginById(id: "templates"): CoreTemplatesPlugin | null;
-      getEnabledPluginById(id: string): unknown | null;
+      getEnabledPluginById: ((id: "templates") => CoreTemplatesPlugin | null) &
+        ((id: string) => unknown | null);
       plugins: {
         sync?: SyncPlugin;
         "file-explorer"?: FileExplorerPlugin;
@@ -35,17 +35,13 @@ declare module "obsidian" {
 
 interface TemplaterPlugin {
   templater: {
-    create_running_config(
-      template: import("obsidian").TAbstractFile,
-      file: import("obsidian").TFile,
-      runMode: number,
-    ): unknown;
-    read_and_parse_template(config: unknown): Promise<string>;
+    create_running_config: (template: TAbstractFile, file: TFile, runMode: number) => unknown;
+    read_and_parse_template: (config: unknown) => Promise<string>;
   };
 }
 
 interface CoreTemplatesPlugin {
-  options: { [key: string]: string };
+  options: Record<string, string>;
 }
 
 interface SyncPlugin {
@@ -58,6 +54,6 @@ interface SyncPlugin {
 
 interface FileExplorerPlugin {
   instance: {
-    revealInFolder(folder: import("obsidian").TFolder): void;
+    revealInFolder: (folder: TFolder) => void;
   };
 }

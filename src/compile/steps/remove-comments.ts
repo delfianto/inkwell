@@ -1,8 +1,13 @@
-import type { CompileContext, CompileInput, CompileManuscriptInput, CompileSceneInput } from "..";
-import { CompileStepKind, makeBuiltinStep, CompileStepOptionType } from "./abstract-compile-step";
+import {
+  type CompileContext,
+  type CompileInput,
+  type CompileManuscriptInput,
+  type CompileSceneInput,
+} from "..";
+import { CompileStepKind, CompileStepOptionType, makeBuiltinStep } from "./abstract-compile-step";
 
-const MARKDOWN_COMMENTS_REGEX = /%%([\s\S]*?)%%/gm;
-const HTML_COMMENTS_REGEX = /<!--([\s\S]*?)-->/gm;
+const MARKDOWN_COMMENTS_REGEX = /%%(?<comment>[\s\S]*?)%%/gmu;
+const HTML_COMMENTS_REGEX = /<!--(?<comment>[\s\S]*?)-->/gmu;
 
 export const RemoveCommentsStep = makeBuiltinStep({
   id: "remove-comments",
@@ -45,16 +50,12 @@ export const RemoveCommentsStep = makeBuiltinStep({
     if (context.kind === CompileStepKind.Scene) {
       return (input as CompileSceneInput[]).map((sceneInput) => {
         const contents = replaceComments(sceneInput.contents);
-        return {
-          ...sceneInput,
-          contents,
-        };
+        return Object.assign(sceneInput, { contents });
       });
-    } else {
-      return {
-        ...(input as CompileManuscriptInput),
-        contents: replaceComments((input as any).contents),
-      };
     }
+    return {
+      ...(input as CompileManuscriptInput),
+      contents: replaceComments((input as any).contents),
+    };
   },
 });

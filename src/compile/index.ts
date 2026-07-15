@@ -1,13 +1,14 @@
 import { type App, normalizePath } from "obsidian";
-import { numberScenes } from "src/model/project-utils";
-import { projectFolderPath, sceneFolderPath, scenePathForFolder } from "src/model/scene-navigation";
-import type { Project, SerializedWorkflow } from "src/model/types";
 import {
-  CompileStepKind,
   type CompileContext,
-  type Workflow,
+  CompileStepKind,
   PLACEHOLDER_MISSING_STEP,
+  type Workflow,
 } from "./steps/abstract-compile-step";
+import { type Project, type SerializedWorkflow } from "src/model/types";
+import { projectFolderPath, sceneFolderPath, scenePathForFolder } from "src/model/scene-navigation";
+import { numberScenes } from "src/model/project-utils";
+
 export * from "./steps/abstract-compile-step";
 
 export interface CompileStatusError {
@@ -28,14 +29,12 @@ export interface CompileStatusSuccess {
 
 export type CompileStatus = CompileStatusError | CompileStatusStep | CompileStatusSuccess;
 
-function formatOptionValues(values: { [key: string]: unknown }): {
-  [key: string]: unknown;
-} {
-  const formattedOptions: { [key: string]: unknown } = {};
+function formatOptionValues(values: Record<string, unknown>): Record<string, unknown> {
+  const formattedOptions: Record<string, unknown> = {};
   for (const key of Object.keys(values)) {
     let v = values[key];
     if (typeof v === "string") {
-      v = v.split("\\n").join("\n");
+      v = v.split(String.raw`\n`).join("\n");
     }
     formattedOptions[key] = v;
   }
@@ -51,17 +50,17 @@ export enum WorkflowError {
   JoinForSingle = "Single-scene projects do not support Join steps.",
 }
 
-export type WorkflowValidationResult = {
+export interface WorkflowValidationResult {
   error: WorkflowError;
   stepPosition: number;
-};
+}
 
 export function calculateWorkflow(
-  workflow: Workflow,
+  workflow: Workflow | null,
   isMultiScene: boolean,
 ): [WorkflowValidationResult, CompileStepKind[]] {
   if (!workflow) {
-    return;
+    return [{ error: WorkflowError.Valid, stepPosition: 0 }, []];
   }
 
   let currentKind = null;
@@ -84,69 +83,37 @@ export function calculateWorkflow(
       ];
     }
 
-    if (!isMultiScene) {
-      if (hasSceneKind) {
-        currentKind = CompileStepKind.Scene;
-      } else if (hasManuscriptKind) {
-        currentKind = CompileStepKind.Manuscript;
-      } else {
-        return [
-          {
-            error: WorkflowError.JoinForSingle,
-            stepPosition,
-          },
-          calculatedKinds,
-        ];
-      }
-    } else {
-      // Calculate the next step kind
-      if (!currentKind) {
-        // First step calculation
+    if (isMultiScene) {
+      if (currentKind && calculatedKinds.includes(CompileStepKind.Join)) {
+        // Subsequent step, post-join: every step must be of Manuscript kind.
+        if (hasManuscriptKind) {
+          currentKind = CompileStepKind.Manuscript;
+        } else {
+          return [{ error: WorkflowError.ScenesStepPostJoin, stepPosition }, calculatedKinds];
+        }
+      } else if (currentKind) {
+        // Subsequent step, pre-join: kinds must be Scene or Join.
         if (hasJoinKind) {
           currentKind = CompileStepKind.Join;
         } else if (hasSceneKind) {
           currentKind = CompileStepKind.Scene;
         } else {
-          return [
-            {
-              error: WorkflowError.BadFirstStep,
-              stepPosition,
-            },
-            calculatedKinds,
-          ];
+          return [{ error: WorkflowError.MissingJoinStep, stepPosition }, calculatedKinds];
         }
+      } else if (hasJoinKind) {
+        // First step: must be of Scene or Join kind.
+        currentKind = CompileStepKind.Join;
+      } else if (hasSceneKind) {
+        currentKind = CompileStepKind.Scene;
       } else {
-        // Subsequent step calculations
-        if (!calculatedKinds.includes(CompileStepKind.Join)) {
-          // We're pre-join, all kinds must be scene or join
-          if (hasJoinKind) {
-            currentKind = CompileStepKind.Join;
-          } else if (hasSceneKind) {
-            currentKind = CompileStepKind.Scene;
-          } else {
-            return [
-              {
-                error: WorkflowError.MissingJoinStep,
-                stepPosition,
-              },
-              calculatedKinds,
-            ];
-          }
-        } else {
-          // We're post-join, all kinds must be of type manuscript
-          if (kinds.includes(CompileStepKind.Manuscript)) {
-            currentKind = CompileStepKind.Manuscript;
-          } else {
-            return [
-              {
-                error: WorkflowError.ScenesStepPostJoin,
-                stepPosition,
-              },
-              calculatedKinds,
-            ];
-          }
-        }
+        return [{ error: WorkflowError.BadFirstStep, stepPosition }, calculatedKinds];
       }
+    } else if (hasSceneKind) {
+      currentKind = CompileStepKind.Scene;
+    } else if (hasManuscriptKind) {
+      currentKind = CompileStepKind.Manuscript;
+    } else {
+      return [{ error: WorkflowError.JoinForSingle, stepPosition }, calculatedKinds];
     }
 
     calculatedKinds.push(currentKind);
@@ -237,7 +204,7 @@ export async function compile(
       stepKind: kind,
     });
 
-    // TODO: how to enforce typings here?
+    // Open question: how to enforce typings here?
     try {
       // handle the case where we're going scene -> manuscript -> scene
       if (project.format === "single" && kind === CompileStepKind.Manuscript) {

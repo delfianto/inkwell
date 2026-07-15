@@ -1,6 +1,4 @@
-import { App, TFile, Vault } from "obsidian";
-import { get, type Writable } from "svelte/store";
-
+import { type App, TFile, type Vault } from "obsidian";
 import {
   EBOOK_STRING_KEYS,
   type EbookMetadata,
@@ -8,14 +6,25 @@ import {
   type MultipleSceneProject,
   type Project,
 } from "./types";
-import { scenePath } from "src/model/scene-navigation";
+import { get, type Writable } from "svelte/store";
 import { createNoteWithPotentialTemplate } from "./note-create";
 import { pluginSettings } from "./stores";
+import { scenePath } from "src/model/scene-navigation";
 
-type SceneInsertionLocation = {
+interface SceneInsertionLocation {
   at: "before" | "after" | "end";
   relativeTo: number | null;
-};
+}
+
+export interface InsertSceneOptions {
+  app: App;
+  projectsStore: Writable<Project[]>;
+  project: MultipleSceneProject;
+  sceneName: string;
+  vault: Vault;
+  location: SceneInsertionLocation;
+  open: boolean;
+}
 
 export async function createScene(
   app: App,
@@ -32,27 +41,20 @@ export async function createScene(
   }
 }
 
-export async function insertScene(
-  app: App,
-  projectsStore: Writable<Project[]>,
-  project: MultipleSceneProject,
-  sceneName: string,
-  vault: Vault,
-  location: SceneInsertionLocation,
-  open: boolean,
-) {
+export async function insertScene(options: InsertSceneOptions): Promise<void> {
+  const { app, projectsStore, project, sceneName, vault, location, open } = options;
   const newScenePath = scenePath(sceneName, project, vault);
 
   if (!newScenePath || !project || project.format !== "scenes") {
     return;
   }
 
-  projectsStore.update((allProjects) => {
-    return allProjects.map((p) => {
+  projectsStore.update((allProjects) =>
+    allProjects.map((p) => {
       if (p.vaultPath === project.vaultPath && p.format === "scenes") {
         if (location.at === "end") {
           p.scenes = [...p.scenes, { title: sceneName, indent: 0 }];
-        } else {
+        } else if (location.relativeTo !== null) {
           const relativeScene = p.scenes[location.relativeTo];
           const index = location.at === "before" ? location.relativeTo : location.relativeTo + 1;
           p.scenes.splice(index, 0, {
@@ -62,8 +64,8 @@ export async function insertScene(
         }
       }
       return p;
-    });
-  });
+    }),
+  );
 
   await createScene(app, newScenePath, project, open);
 }
@@ -120,7 +122,7 @@ function writeEbookMetadata(obj: Record<string, any>, ebook: EbookMetadata | und
   }
 
   if (Array.isArray(e.subjects) && e.subjects.length > 0) {
-    obj["subjects"] = e.subjects.slice();
+    obj["subjects"] = [...e.subjects];
   } else {
     delete obj["subjects"];
   }
@@ -189,7 +191,7 @@ export function numberScenes(scenes: IndentedScene[]): NumberedScene[] {
       let fill = lastNumberedIndent + 1;
       while (fill <= indent) {
         numbering[fill] = 1;
-        fill = fill + 1;
+        fill += 1;
       }
       numbering[indent] = 0;
     } else if (indent < lastNumberedIndent) {
@@ -198,7 +200,7 @@ export function numberScenes(scenes: IndentedScene[]): NumberedScene[] {
     }
     lastNumberedIndent = indent;
 
-    numbering[indent] = numbering[indent] + 1;
+    numbering[indent] += 1;
     return {
       ...scene,
       numbering: [...numbering],

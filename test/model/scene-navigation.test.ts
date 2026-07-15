@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { findScene, projectForPath, scenePathForLocation } from "src/model/scene-navigation";
-import type { MultipleSceneProject, Project, SingleSceneProject } from "src/model/types";
+import { type MultipleSceneProject, type Project, type SingleSceneProject } from "src/model/types";
 
 const project = (overrides: Partial<MultipleSceneProject> = {}): MultipleSceneProject => ({
   format: "scenes",

@@ -1,0 +1,117 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "promise"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "error",
+    "perf": "error",
+    "style": "error"
+  },
+  "rules": {
+    // ── Import hygiene ─────────────────────────────────────────
+    // Full strict form: declaration order (by syntax group, then first
+    // member) and member order within each declaration.
+    "sort-imports": ["error", { "ignoreCase": true }],
+    "import/first": "error",
+    "import/no-duplicates": "error",
+    "import/no-cycle": "error",
+    "import/no-self-import": "error",
+    // Inline `type` specifiers are this codebase's convention (one import
+    // line per module, types marked in place).
+    "import/consistent-type-specifier-style": ["error", "prefer-inline"],
+
+    // ── Deliberate deviations, each with a reason ──────────────
+    // Obsidian's API is null-based (getAbstractFileByPath, caches, …);
+    // banning null would fight the platform.
+    "unicorn/no-null": "off",
+    // Components and Obsidian-style classes are PascalCase files; plain
+    // modules are kebab-case. Both are deliberate.
+    "unicorn/filename-case": ["error", { "cases": { "kebabCase": true, "pascalCase": true } }],
+    // `new Notice(...)` / `new FolderSuggest(...)` for side effects is the
+    // canonical Obsidian idiom.
+    "no-new": "off",
+    // Ternaries, early continue, and 0/1 indices are idiomatic JS/TS;
+    // banning them harms readability rather than helping it.
+    "no-ternary": "off",
+    "no-continue": "off",
+    "no-magic-numbers": "off",
+    // Single-line guards (`if (x) return;`) match the surrounding style.
+    "curly": ["error", "multi-line"],
+    // The styles.css side-effect import is how the bundle emits styles.css.
+    "import/no-unassigned-import": ["error", { "allow": ["**/*.css"] }],
+    // Constructor-parameter-property DI legitimately reaches 4-5 params.
+    "max-params": ["error", { "max": 5 }],
+    // oxlint flags constructors whose body is only super(...) even when
+    // they declare TS parameter properties — false positive for our style.
+    "no-useless-constructor": "off",
+    // Short names are fine where scope is tiny (loop vars, lambda params).
+    "id-length": "off",
+    // Settings tabs and renderers are naturally linear; size caps force
+    // artificial splitting.
+    "max-lines": "off",
+    "max-lines-per-function": "off",
+    "max-statements": "off",
+    "max-depth": "off",
+    // Vault operations in loops are sequential by design (ordered folder
+    // creation, ordered note creation).
+    "no-await-in-loop": "off",
+    // `new Promise` is unavoidable when wrapping timer APIs (setInterval /
+    // setTimeout) for the Sync-settling gate — there is no browser-native
+    // promisified timer. Only used in src/model/sync-waiter.ts.
+    "promise/avoid-new": "off",
+    // Constructor parameter properties are this codebase's DI style.
+    "typescript/parameter-properties": "off",
+    // Named exports everywhere except the plugin entry (Obsidian requires
+    // its default export); no default-export preference.
+    "import/prefer-default-export": "off",
+    "import/no-named-export": "off",
+    // Exports live inline on each declaration; a consolidated export block
+    // (or exports-at-end) would separate declarations from their public
+    // status.
+    "import/group-exports": "off",
+    "import/exports-last": "off",
+    // `let x: T;` before try/catch assignment is the clearest form.
+    "init-declarations": "off",
+    // Object keys are grouped semantically (settings by topic, configs in
+    // canonical order); alphabetizing destroys that information.
+    "sort-keys": "off",
+    // Top-level function declarations + arrows for small helpers.
+    "func-style": ["error", "declaration", { "allowArrowFunctions": true }],
+    // Vite-injected build constants use the conventional dunder names.
+    "no-underscore-dangle": ["error", { "allow": ["__BUILD_TIME__", "__DEV_BUILD__"] }],
+    // Lowercase inline comments are fine; sentence-casing every fragment
+    // is churn without meaning.
+    "capitalized-comments": "off"
+  },
+  "overrides": [
+    {
+      // Build/test tooling runs under Node — builtins are the point.
+      "files": ["*.config.mts", "*.config.ts", "*.config.js"],
+      "rules": {
+        "import/no-nodejs-modules": "off"
+      }
+    },
+    {
+      // Svelte 5 reassigns `let x = $state(...)` through compiler-generated
+      // code (bind:this / bind:value) that oxlint's flow analysis can't see,
+      // so prefer-const false-positives on genuinely reassigned bindings.
+      "files": ["*.svelte"],
+      "rules": {
+        "prefer-const": "off"
+      }
+    },
+    {
+      // Tests pass `undefined` deliberately (that's the case under test),
+      // and the obsidian mock is intentionally a pile of empty classes.
+      "files": ["test/**"],
+      "rules": {
+        "unicorn/no-useless-undefined": "off",
+        "typescript/no-extraneous-class": "off",
+        "max-classes-per-file": "off",
+        "no-useless-constructor": "off"
+      }
+    }
+  ],
+  "ignorePatterns": ["dist", "coverage", "node_modules", "test-inkwell-vault", "*.md"]
+}

@@ -1,11 +1,11 @@
 export const INKWELL_CURRENT_PLUGIN_DATA_VERSION = 3;
 
-export type IndentedScene = {
+export interface IndentedScene {
   title: string;
   indent: number;
-};
+}
 
-export type EbookMetadata = {
+export interface EbookMetadata {
   author?: string;
   language?: string;
   identifier?: string;
@@ -17,7 +17,7 @@ export type EbookMetadata = {
   subjects?: string[];
   series?: string;
   seriesIndex?: number;
-};
+}
 
 /** Ebook metadata fields that are scalars (string-valued). Excludes `subjects` (array) and `seriesIndex` (number). */
 export const EBOOK_STRING_KEYS = [
@@ -34,7 +34,7 @@ export const EBOOK_STRING_KEYS = [
 
 export type EbookStringKey = (typeof EBOOK_STRING_KEYS)[number];
 
-export type MultipleSceneProject = {
+export interface MultipleSceneProject {
   format: "scenes";
   title: string;
   titleInFrontmatter: boolean;
@@ -46,29 +46,29 @@ export type MultipleSceneProject = {
   unknownFiles: string[];
   sceneTemplate: string | null;
   ebook: EbookMetadata;
-};
+}
 
-export type SingleSceneProject = {
+export interface SingleSceneProject {
   format: "single";
   title: string;
   titleInFrontmatter: boolean;
   vaultPath: string;
   workflow: string | null;
   ebook: EbookMetadata;
-};
+}
 
 export type Project = MultipleSceneProject | SingleSceneProject;
 
-export type SerializedStep = {
+export interface SerializedStep {
   id: string;
-  optionValues: { [id: string]: unknown };
-};
+  optionValues: Record<string, unknown>;
+}
 
-export type SerializedWorkflow = {
+export interface SerializedWorkflow {
   name: string;
   description: string;
   steps: SerializedStep[];
-};
+}
 
 /**
  * Maps project vault paths to either a map of scene names to word counts or,

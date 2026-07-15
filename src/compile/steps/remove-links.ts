@@ -1,5 +1,10 @@
-import type { CompileContext, CompileInput, CompileManuscriptInput, CompileSceneInput } from "..";
-import { CompileStepKind, makeBuiltinStep, CompileStepOptionType } from "./abstract-compile-step";
+import {
+  type CompileContext,
+  type CompileInput,
+  type CompileManuscriptInput,
+  type CompileSceneInput,
+} from "..";
+import { CompileStepKind, CompileStepOptionType, makeBuiltinStep } from "./abstract-compile-step";
 
 export const RemoveLinksStep = makeBuiltinStep({
   id: "remove-links",
@@ -42,17 +47,13 @@ export const RemoveLinksStep = makeBuiltinStep({
     if (context.kind === CompileStepKind.Scene) {
       return (input as CompileSceneInput[]).map((sceneInput) => {
         const contents = replaceLinks(sceneInput.contents);
-        return {
-          ...sceneInput,
-          contents,
-        };
+        return Object.assign(sceneInput, { contents });
       });
-    } else {
-      return {
-        ...(input as CompileManuscriptInput),
-        contents: replaceLinks((input as any).contents),
-      };
     }
+    return {
+      ...(input as CompileManuscriptInput),
+      contents: replaceLinks((input as any).contents),
+    };
   },
 });
 
@@ -66,50 +67,45 @@ export function replaceWikiLinks(contents: string): string {
   for (let i = contents.length - 1; i >= 0; i--) {
     const char = contents.charAt(i);
     if (end < 0) {
-      if (char === "]") {
-        if (i > 0 && contents.charAt(i - 1) === "]") {
-          end = i;
-          // can skip the next character
-          i = i - 1;
-        }
+      if (char === "]" && i > 0 && contents.charAt(i - 1) === "]") {
+        end = i;
+        // can skip the next character
+        i -= 1;
       }
     } else {
       if (char === "|") {
         if (startOfAlias >= 0) {
           additionalAlias = true;
         }
-        startOfAlias = i + 1; // update to earliest instance of the character
+        // update to earliest instance of the character
+        startOfAlias = i + 1;
         continue;
       }
-      if (char === "[") {
-        if (i > 0 && contents.charAt(i - 1) === "[") {
-          if (i > 1 && contents.charAt(i - 2) === "!") {
-            // embed, jump to i -2
-            i = i - 2;
-          } else if (i === end - 2) {
-            // brackets are empty and should just display as [[]]
-            i = i - 1;
+      if (char === "[" && i > 0 && contents.charAt(i - 1) === "[") {
+        if (i > 1 && contents.charAt(i - 2) === "!") {
+          // embed, jump to i -2
+          i -= 2;
+        } else if (i === end - 2) {
+          // brackets are empty and should just display as [[]]
+          i -= 1;
+        } else {
+          let replacement: string;
+          if (startOfAlias >= 0) {
+            // remove all instances of "|"
+            replacement = additionalAlias
+              ? contents.slice(startOfAlias, end - 1).replaceAll(/\|/gmu, "")
+              : contents.slice(startOfAlias, end - 1);
           } else {
-            let replacement: string;
-            if (startOfAlias >= 0) {
-              if (additionalAlias) {
-                // remove all instances of "|"
-                replacement = contents.slice(startOfAlias, end - 1).replace(/\|/gm, "");
-              } else {
-                replacement = contents.slice(startOfAlias, end - 1);
-              }
-            } else {
-              replacement = contents.slice(i + 1, end - 1);
-            }
-            contents = contents.slice(0, i - 1) + replacement + contents.slice(end + 1);
-            // can skip the next character
-            i = i - 1;
+            replacement = contents.slice(i + 1, end - 1);
           }
-          end = -1;
-          additionalAlias = false;
-          startOfAlias = -1;
-          continue;
+          contents = contents.slice(0, i - 1) + replacement + contents.slice(end + 1);
+          // can skip the next character
+          i -= 1;
         }
+        end = -1;
+        additionalAlias = false;
+        startOfAlias = -1;
+        continue;
       }
     }
   }
@@ -129,34 +125,30 @@ export function replaceExternalLinks(contents: string): string {
       if (char === ")") {
         end = i;
       }
-    } else {
-      if (aliasEnd < 0) {
-        if (char === "(") {
-          if (i > 0 && contents.charAt(i - 1) === "]") {
-            aliasEnd = i - 1;
-          } else {
-            // invalid link
-            end = -1;
-            aliasEnd = -1;
-          }
-          // can skip the next character
-          i = i - 1;
-          continue;
-        }
-      } else {
-        if (char === "[") {
-          if (i > 0 && contents.charAt(i - 1) === "!") {
-            // embed, jump to i - 1
-            i = i - 1;
-          } else {
-            const replacement = contents.slice(i + 1, aliasEnd);
-            contents = contents.slice(0, i) + replacement + contents.slice(end + 1);
-          }
+    } else if (aliasEnd < 0) {
+      if (char === "(") {
+        if (i > 0 && contents.charAt(i - 1) === "]") {
+          aliasEnd = i - 1;
+        } else {
+          // invalid link
           end = -1;
           aliasEnd = -1;
-          continue;
         }
+        // can skip the next character
+        i -= 1;
+        continue;
       }
+    } else if (char === "[") {
+      if (i > 0 && contents.charAt(i - 1) === "!") {
+        // embed, jump to i - 1
+        i -= 1;
+      } else {
+        const replacement = contents.slice(i + 1, aliasEnd);
+        contents = contents.slice(0, i) + replacement + contents.slice(end + 1);
+      }
+      end = -1;
+      aliasEnd = -1;
+      continue;
     }
   }
 

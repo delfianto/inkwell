@@ -1,23 +1,21 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
-import type { Unsubscriber } from "svelte/store";
-import { get } from "svelte/store";
-
-import type InkwellPlugin from "../../main";
+import { type App, PluginSettingTab, Setting } from "obsidian";
+import { get, type Unsubscriber } from "svelte/store";
 import { pluginSettings, userScriptSteps } from "src/model/stores";
 import { FileSuggest } from "./file-suggest";
+import type InkwellPlugin from "../../main";
 
 export class InkwellSettingsTab extends PluginSettingTab {
   plugin: InkwellPlugin;
   private unsubscribers: Unsubscriber[] = [];
-  private stepsSummary: HTMLElement;
-  private stepsList: HTMLUListElement;
+  private stepsSummary!: HTMLElement;
+  private stepsList!: HTMLUListElement;
 
   constructor(app: App, plugin: InkwellPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
 
-  display(): void {
+  override display(): void {
     const settings = get(pluginSettings);
 
     const { containerEl } = this;
@@ -25,9 +23,10 @@ export class InkwellSettingsTab extends PluginSettingTab {
     containerEl.empty();
 
     new Setting(containerEl).setName("Composition").setHeading();
-    new Setting(containerEl).setName("New scene template").addSearch((cb) => {
-      new FileSuggest(this.app, cb.inputEl);
-      cb.setPlaceholder("templates/Scene.md")
+    new Setting(containerEl).setName("New scene template").addSearch((search) => {
+      new FileSuggest(this.app, search.inputEl);
+      search
+        .setPlaceholder("templates/Scene.md")
         .setValue(settings.sceneTemplate ?? "")
         .onChange((v) => {
           pluginSettings.update((s) => ({
@@ -46,9 +45,9 @@ export class InkwellSettingsTab extends PluginSettingTab {
       .setDesc(
         "If on, shows numbers for scenes with subscenes separated by periods, e.g. 1.1.2. Create subscenes by dragging a scene to an indent under an existing scene, or us an indent command.",
       )
-      .addToggle((cb) => {
-        cb.setValue(settings.numberScenes);
-        cb.onChange((value) => {
+      .addToggle((toggle) => {
+        toggle.setValue(settings.numberScenes);
+        toggle.onChange((value) => {
           pluginSettings.update((s) => ({
             ...s,
             numberScenes: value,
@@ -64,13 +63,10 @@ export class InkwellSettingsTab extends PluginSettingTab {
     });
     this.unsubscribers.push(
       userScriptSteps.subscribe((steps) => {
-        if (steps && steps.length > 0) {
-          this.stepsSummary.innerText = `Loaded ${steps.length} step${
-            steps.length !== 1 ? "s" : ""
-          }:`;
-        } else {
-          this.stepsSummary.innerText = "No steps loaded.";
-        }
+        this.stepsSummary.textContent =
+          steps && steps.length > 0
+            ? `Loaded ${steps.length} step${steps.length === 1 ? "" : "s"}:`
+            : "No steps loaded.";
         if (this.stepsList) {
           this.stepsList.empty();
           if (steps) {
@@ -101,9 +97,9 @@ export class InkwellSettingsTab extends PluginSettingTab {
       .setDesc(
         "Prevent Inkwell from running until Obsidian Sync completes its first sync. If you are using Sync, you may want to enable this if you experience issues with scenes disappearing or falsely being shown as new.",
       )
-      .addToggle((cb) => {
-        cb.setValue(settings.waitForSync);
-        cb.onChange((value) => {
+      .addToggle((toggle) => {
+        toggle.setValue(settings.waitForSync);
+        toggle.onChange((value) => {
           pluginSettings.update((s) => ({
             ...s,
             waitForSync: value,
@@ -116,9 +112,9 @@ export class InkwellSettingsTab extends PluginSettingTab {
       .setDesc(
         "If sync status cannot be detected, wait for the time specified below before looking for scenes.",
       )
-      .addToggle((cb) => {
-        cb.setValue(settings.fallbackWaitEnabled);
-        cb.onChange((value) => {
+      .addToggle((toggle) => {
+        toggle.setValue(settings.fallbackWaitEnabled);
+        toggle.onChange((value) => {
           pluginSettings.update((s) => ({
             ...s,
             fallbackWaitEnabled: value,
@@ -129,10 +125,10 @@ export class InkwellSettingsTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Fallback wait time")
       .setDesc("Time to wait in seconds if sync status cannot be detected.")
-      .addText((cb) => {
-        cb.setValue(settings.fallbackWaitTime.toString());
-        cb.onChange((value) => {
-          const numberValue = parseInt(value);
+      .addText((text) => {
+        text.setValue(settings.fallbackWaitTime.toString());
+        text.onChange((value) => {
+          const numberValue = Math.trunc(Number(value));
           if (!isNaN(numberValue) && numberValue > 0) {
             pluginSettings.update((s) => ({
               ...s,
@@ -158,7 +154,7 @@ export class InkwellSettingsTab extends PluginSettingTab {
     });
   }
 
-  hide(): void {
+  override hide(): void {
     this.unsubscribers.forEach((u) => u());
   }
 }

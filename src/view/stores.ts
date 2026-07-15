@@ -1,9 +1,8 @@
-import type { TFile } from "obsidian";
 import { derived, writable } from "svelte/store";
-
+import { type Project, type ProjectWordCounts } from "src/model/types";
 import { projectWordCounts, selectedProject } from "src/model/stores";
 import { type SceneWordStats, statsForScene } from "src/model/scene-stats";
-import type { Project, ProjectWordCounts } from "src/model/types";
+import { type TFile } from "obsidian";
 
 // Writable stores
 export const activeFile = writable<TFile | null>(null);

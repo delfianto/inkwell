@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-
+import {
+  type MultipleSceneProject,
+  type ProjectWordCounts,
+  type SingleSceneProject,
+} from "src/model/types";
 import { statsForScene } from "src/model/scene-stats";
-import type { MultipleSceneProject, ProjectWordCounts, SingleSceneProject } from "src/model/types";
 
 const fakeFile = (path: string) => ({ path }) as never;
 

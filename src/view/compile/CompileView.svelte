@@ -1,54 +1,49 @@
 <script lang="ts">
-  // @ts-nocheck
-  import type Sortable from "sortablejs";
-  import { Notice, type Vault } from "obsidian";
-
   import {
+    calculateWorkflow,
     type CompileStatus,
     CompileStepKind,
     formatStepKind,
     type Workflow,
     WorkflowError,
     type WorkflowValidationResult,
-    calculateWorkflow,
   } from "src/compile";
-  import { getContext } from "svelte";
   import {
+    currentWorkflow,
+    type Project,
     projects,
     selectedProject,
     workflows,
-    currentWorkflow,
-  } from "src/model/stores";
-  import CompileStepView from "./CompileStepView.svelte";
-  import SortableList from "../sortable/SortableList.svelte";
+  } from "src/model";
+  import { Notice, type Vault } from "obsidian";
   import AutoTextArea from "../components/AutoTextArea.svelte";
+  import CompileStepView from "./CompileStepView.svelte";
+  import { type ConfirmActionOptions } from "../modals/ConfirmActionModal";
+  import { getContext } from "svelte";
   import Icon from "../components/Icon.svelte";
-  import type { Project } from "src/model/types";
+  import type Sortable from "sortablejs";
+  import SortableList from "../sortable/SortableList.svelte";
 
-  let workflowContextButton: HTMLElement = $state(null);
+  let workflowContextButton: HTMLElement | null = $state(null);
   let workflowInputState: "hidden" | "new" | "rename" = $state("hidden");
   let workflowInputValue = $state("");
-  let workflowInput: HTMLElement = $state(null);
+  let workflowInput: HTMLElement | null = $state(null);
   let allWorkflowNames: string[] = $state([]);
   let currentWorkflowName: string | null = $state(null);
-  let compileStatus: HTMLElement = $state(null);
+  let compileStatus: HTMLElement | null = $state(null);
   let isDeletingWorkflow = $state(false);
 
-  const showConfirmModal: (
-    title: string,
-    description: string,
-    yesText: string,
-    yesAction: () => void
-  ) => void = getContext("showConfirmModal");
+  const showConfirmModal: (options: ConfirmActionOptions) => void =
+    getContext("showConfirmModal");
 
-  let currentDraftIndex = $derived(
+  const currentDraftIndex = $derived(
     $selectedProject
       ? $projects.findIndex((d) => d.vaultPath === $selectedProject.vaultPath)
       : -1
   );
 
   $effect(() => {
-    allWorkflowNames = Object.keys($workflows).sort() ?? [];
+    allWorkflowNames = Object.keys($workflows).toSorted() ?? [];
   });
 
   $effect(() => {
@@ -61,10 +56,8 @@
         !currentWorkflowName &&
         allWorkflowNames.length > 0
       ) {
-        const _currentDraftIndex = $projects.findIndex(
-          (d) => d.vaultPath === $selectedProject.vaultPath
-        );
-        $projects[_currentDraftIndex].workflow = allWorkflowNames[0];
+        const [firstWorkflow] = allWorkflowNames;
+        $projects[currentDraftIndex].workflow = firstWorkflow;
       }
     }
   });
@@ -82,51 +75,48 @@
   ) => void = getContext("showCompileActionsMenu");
 
   function workflowAction(type: "new" | "rename" | "delete") {
-    if (type == "new") {
+    if (type === "new") {
       workflowInputState = "new";
-    } else if (type == "rename") {
-      workflowInputValue = currentWorkflowName;
+    } else if (type === "rename") {
+      workflowInputValue = currentWorkflowName!;
       workflowInputState = "rename";
-    } else if (type == "delete") {
-      showConfirmModal(
-        `Delete ${currentWorkflowName}?`,
-        "Really delete this workflow? This can't be undone.",
-        "Delete",
-        () => {
+    } else if (type === "delete") {
+      showConfirmModal({
+        title: `Delete ${currentWorkflowName}?`,
+        explanation: "Really delete this workflow? This can't be undone.",
+        yesText: "Delete",
+        yesAction: () => {
           isDeletingWorkflow = true;
 
           const toDelete = currentWorkflowName;
-          const remaining = allWorkflowNames.filter((n) => n != toDelete);
-          if (remaining.length > 0) {
-            $projects[currentDraftIndex].workflow = remaining[0];
-          } else {
-            $projects[currentDraftIndex].workflow = null;
-          }
+          const remaining = allWorkflowNames.filter((n) => n !== toDelete);
+          const [firstRemaining] = remaining;
+          $projects[currentDraftIndex].workflow = remaining.length > 0 ? firstRemaining : null;
 
-          $workflows = delete $workflows[toDelete] && $workflows;
+          $workflows = (delete $workflows[toDelete!] && $workflows) as Record<string, Workflow>;
 
           isDeletingWorkflow = false;
-        }
-      );
+        },
+      });
     }
   }
 
   function onWorkflowInputEnter() {
-    if (workflowInputValue.length == 0) {
+    if (workflowInputValue.length === 0) {
       return;
     }
 
-    if (workflowInputState == "new") {
+    if (workflowInputState === "new") {
       $workflows[workflowInputValue] = {
         name: workflowInputValue,
         description: "",
         steps: [],
       };
-    } else if (workflowInputState == "rename") {
-      const workflow = $workflows[currentWorkflowName];
+    } else if (workflowInputState === "rename") {
+      const workflow = $workflows[currentWorkflowName!];
       workflow.name = workflowInputValue;
       $workflows[workflowInputValue] = workflow;
-      $workflows = delete $workflows[currentWorkflowName] && $workflows;
+      $workflows = (delete $workflows[currentWorkflowName!] && $workflows) as Record<string, Workflow>;
     }
     $projects[currentDraftIndex].workflow = workflowInputValue;
     workflowInputValue = "";
@@ -153,7 +143,7 @@
     if ($currentWorkflow) {
       [validation, calculatedKinds] = calculateWorkflow(
         $currentWorkflow,
-        $selectedProject.format === "scenes"
+        $selectedProject!.format === "scenes"
       );
     } else {
       validation = VALID;
@@ -175,8 +165,8 @@
     return null;
   }
 
-  type StepItem = { id: string; index: number };
-  let items: StepItem[] = $derived(
+  interface StepItem { id: string; index: number }
+  const items: StepItem[] = $derived(
     $currentWorkflow
       ? $currentWorkflow.steps.map((step, index) => ({
           id: step.id,
@@ -193,40 +183,39 @@
 
   function itemOrderChanged(newItems: StepItem[]) {
     const newWorkflow = {
-      ...$currentWorkflow,
-      steps: newItems.map(({ index }) => $currentWorkflow.steps[index]),
+      ...$currentWorkflow!,
+      steps: newItems.map(({ index }) => $currentWorkflow!.steps[index]),
     };
-    $workflows[currentWorkflowName] = newWorkflow;
+    $workflows[currentWorkflowName!] = newWorkflow;
   }
 
-  let defaultCompileStatus = $derived(
+  const defaultCompileStatus = $derived(
     `Will run ${$currentWorkflow ? $currentWorkflow.steps.length : 0} steps.`
   );
 
   function onCompileStatusChange(status: CompileStatus) {
-    if (status.kind == "CompileStatusError") {
-      compileStatus.innerText = `${status.error}. See dev console for more details.`;
-      compileStatus.classList.add("compile-status-error");
-      restoreDefaultStatusAfter(10000);
-    } else if (status.kind == "CompileStatusStep") {
-      compileStatus.innerText = `Step ${status.stepIndex + 1}/${
+    if (status.kind === "CompileStatusError") {
+      compileStatus!.textContent = `${status.error}. See dev console for more details.`;
+      compileStatus!.classList.add("compile-status-error");
+      restoreDefaultStatusAfter(10_000);
+    } else if (status.kind === "CompileStatusStep") {
+      compileStatus!.textContent = `Step ${status.stepIndex + 1}/${
         status.totalSteps
       } (${formatStepKind(status.stepKind)})`;
-    } else if (status.kind == "CompileStatusSuccess") {
-      compileStatus.innerText = "Compiled manuscript.";
-      compileStatus.classList.add("compile-status-success");
+    } else if (status.kind === "CompileStatusSuccess") {
+      compileStatus!.textContent = "Compiled manuscript.";
+      compileStatus!.classList.add("compile-status-success");
       restoreDefaultStatusAfter();
       new Notice("Compile complete.");
     } else {
-      compileStatus.innerText = "default??";
+      compileStatus!.textContent = "default??";
     }
   }
 
-  function restoreDefaultStatusAfter(ms: number = 3000) {
+  function restoreDefaultStatusAfter(ms = 3000) {
     setTimeout(() => {
-      compileStatus.innerText = defaultCompileStatus;
-      compileStatus.classList.remove("compile-status-error");
-      compileStatus.classList.remove("compile-status-success");
+      compileStatus!.textContent = defaultCompileStatus;
+      compileStatus!.classList.remove("compile-status-error", "compile-status-success");
     }, ms);
   }
 
@@ -238,8 +227,8 @@
   ) => Vault = getContext("compile");
   function doCompile() {
     compile(
-      $selectedProject,
-      $currentWorkflow,
+      $selectedProject!,
+      $currentWorkflow!,
       calculatedKinds,
       onCompileStatusChange
     );
@@ -254,7 +243,7 @@
           <input
             type="text"
             class="inkwell-workflow-name-input"
-            placeholder={workflowInputState == "new"
+            placeholder={workflowInputState === "new"
               ? "New Workflow…"
               : "My Cool Workflow"}
             bind:value={workflowInputValue}
@@ -264,7 +253,7 @@
                 onWorkflowInputEnter();
               } else if (e.key === "Escape") {
                 workflowInputValue = "";
-                workflowInput.blur();
+                workflowInput!.blur();
                 workflowInputState = "hidden";
               }
             }}
@@ -291,11 +280,11 @@
             aria-label="Workflow options"
             bind:this={workflowContextButton}
             onclick={() => {
-              const rect = workflowContextButton.getBoundingClientRect();
+              const rect = workflowContextButton!.getBoundingClientRect();
               showCompileActionsMenu(
                 rect.x,
                 rect.y,
-                currentWorkflowName,
+                currentWorkflowName!,
                 workflowAction
               );
             }}
@@ -304,16 +293,16 @@
           </button>
         {/if}
       </div>
-      {#if $workflows[currentWorkflowName]}
+      {#if $workflows[currentWorkflowName!]}
         <AutoTextArea
           placeholder="Click here to leave a description of your workflow…"
           minRows={2}
           maxRows={5}
-          bind:value={$workflows[currentWorkflowName].description}
+          bind:value={$workflows[currentWorkflowName!].description}
         />
       {/if}
     </div>
-    {#if $workflows[currentWorkflowName]}
+    {#if $workflows[currentWorkflowName!]}
       <SortableList
         {items}
         {sortableOptions}
@@ -323,15 +312,15 @@
         {#snippet children(item)}
           <CompileStepView
             ordinal={item.index + 1}
-            step={$workflows[currentWorkflowName].steps[item.index]}
+            step={$workflows[currentWorkflowName!].steps[item.index]}
             onremoveStep={() => {
               const newWorkflow = {
-                ...$currentWorkflow,
-                steps: $currentWorkflow.steps.filter(
+                ...$currentWorkflow!,
+                steps: $currentWorkflow!.steps.filter(
                   (_e, index) => item.index !== index
                 ),
               };
-              $workflows[currentWorkflowName] = newWorkflow;
+              $workflows[currentWorkflowName!] = newWorkflow;
             }}
             calculatedKind={kindAtIndex(item.index)}
             error={errorAtIndex(item.index)}

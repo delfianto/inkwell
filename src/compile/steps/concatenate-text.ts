@@ -1,11 +1,12 @@
-import type { CompileManuscriptInput } from "..";
-import type { CompileContext, CompileInput } from "./abstract-compile-step";
 import {
+  type CompileContext,
+  type CompileInput,
   CompileStepKind,
   CompileStepOptionType,
   makeBuiltinStep,
   typeMismatchError,
 } from "./abstract-compile-step";
+import { type CompileManuscriptInput } from "..";
 
 export const ConcatenateTextStep = makeBuiltinStep({
   id: "concatenate-text",

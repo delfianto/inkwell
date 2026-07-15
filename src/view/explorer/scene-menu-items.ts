@@ -1,6 +1,6 @@
 import { projects, selectedProject } from "src/model/stores";
-import type { MultipleSceneProject } from "src/model/types";
 import { get } from "svelte/store";
+import { type MultipleSceneProject } from "src/model/types";
 
 const getSelectedProjectWithIndex = () => {
   const project = get(selectedProject) as MultipleSceneProject;

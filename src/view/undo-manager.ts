@@ -1,4 +1,4 @@
-import type { KeymapContext } from "obsidian";
+import { type KeymapContext } from "obsidian";
 
 /**
  * Return `false` to automatically preventDefault

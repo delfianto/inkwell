@@ -1,5 +1,4 @@
-import { TAbstractFile, TFile } from "obsidian";
-
+import { type TAbstractFile, TFile } from "obsidian";
 import { TextInputSuggest } from "./suggest";
 
 export class FileSuggest extends TextInputSuggest<TFile> {

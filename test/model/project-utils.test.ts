@@ -1,11 +1,15 @@
-import { describe, expect, it } from "vitest";
 import {
-  encodeIndentedScenes,
   decodeFlatScenes,
+  encodeIndentedScenes,
   numberScenes,
   setProjectFrontmatter,
 } from "src/model/project-utils";
-import type { IndentedScene, MultipleSceneProject, SingleSceneProject } from "src/model/types";
+import { describe, expect, it } from "vitest";
+import {
+  type IndentedScene,
+  type MultipleSceneProject,
+  type SingleSceneProject,
+} from "src/model/types";
 
 const flat = (titles: string[]): IndentedScene[] => titles.map((title) => ({ title, indent: 0 }));
 
