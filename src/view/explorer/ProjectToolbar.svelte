@@ -72,7 +72,7 @@
       aria-label="Open compile builder"
       onclick={openCompile}
     >
-      <Icon iconName="blocks" />
+      <Icon iconName="book-open" />
     </button>
   {/if}
 </div>
@@ -89,12 +89,10 @@
     flex: 1;
   }
 
+  /* The three view modes cluster tighter than the toolbar's own gap. */
   .inkwell-toolbar-group {
     display: flex;
     gap: var(--size-2-1);
-    padding: var(--size-2-1);
-    background: var(--background-secondary);
-    border-radius: var(--radius-m);
   }
 
   .inkwell-toolbar-btn {
@@ -122,9 +120,16 @@
     background: var(--background-modifier-hover);
   }
 
+  .inkwell-toolbar-btn:focus,
+  .inkwell-toolbar-btn:focus-visible {
+    box-shadow: none;
+  }
+
+  /* Active view mode: a subtle pill with an accent-colored icon — not a
+     heavy filled block. */
   .inkwell-toolbar-group .inkwell-toolbar-btn.active {
-    color: var(--text-on-accent);
-    background: var(--interactive-accent);
+    color: var(--text-accent);
+    background: var(--background-secondary-alt);
   }
 
   .inkwell-toolbar-compile {
@@ -132,7 +137,7 @@
   }
 
   .inkwell-toolbar-compile:hover {
-    color: var(--text-on-accent);
-    background: var(--interactive-accent);
+    color: var(--text-accent);
+    background: var(--background-modifier-hover);
   }
 </style>

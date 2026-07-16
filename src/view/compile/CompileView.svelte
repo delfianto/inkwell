@@ -371,7 +371,7 @@
     <!-- Top bar -->
     <div class="inkwell-builder-top">
       <div class="inkwell-builder-title">
-        <span class="inkwell-builder-mark"><Icon iconName="blocks" /></span>
+        <span class="inkwell-builder-mark"><Icon iconName="book-open" /></span>
         <span class="inkwell-builder-name">Compile</span>
         <span class="inkwell-builder-project">· {$selectedProject.title}</span>
       </div>
