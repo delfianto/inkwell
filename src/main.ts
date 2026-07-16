@@ -62,6 +62,7 @@ export default class InkwellPlugin extends Plugin {
   override async onload(): Promise<void> {
     console.log(`[Inkwell] Starting Inkwell ${this.manifest.version}…`);
     addIcon(ICON_NAME, ICON_SVG);
+    this.detectScrollbarStyle();
 
     this.registerView(VIEW_TYPE_INKWELL_EXPLORER, (leaf: WorkspaceLeaf) => new ExplorerPane(leaf));
     this.registerView(VIEW_TYPE_INKWELL_COMPILE, (leaf: WorkspaceLeaf) => new CompilePane(leaf));
@@ -149,6 +150,22 @@ export default class InkwellPlugin extends Plugin {
     this.wordCountTracker.destroy();
     this.app.workspace.getLeavesOfType(VIEW_TYPE_INKWELL_EXPLORER).forEach((leaf) => leaf.detach());
     this.app.workspace.getLeavesOfType(VIEW_TYPE_INKWELL_COMPILE).forEach((leaf) => leaf.detach());
+    document.body.classList.remove("inkwell-classic-scrollbars");
+  }
+
+  /**
+   * Flag the body when the environment uses classic, space-taking scrollbars
+   * (Obsidian's styled scrollbars, or macOS "always show scroll bars"). Only
+   * then does the explorer auto-hide its scroll thumb — native overlay
+   * scrollbars already auto-hide and must not be switched to a classic bar.
+   */
+  private detectScrollbarStyle(): void {
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:absolute;top:-9999px;width:50px;height:50px;overflow:scroll;";
+    document.body.append(probe);
+    const classic = probe.offsetWidth - probe.clientWidth > 0;
+    probe.remove();
+    document.body.classList.toggle("inkwell-classic-scrollbars", classic);
   }
 
   async loadSettings(): Promise<void> {
