@@ -272,7 +272,7 @@
     gap: var(--size-4-1);
     min-height: 92px;
     padding: var(--size-4-2);
-    background: var(--background-secondary);
+    background: var(--background-primary);
     border: var(--border-width) solid var(--background-modifier-border);
     border-radius: var(--radius-m);
     cursor: pointer;
