@@ -13,6 +13,7 @@ import {
 } from "./navigation";
 import { indentScene, unindentScene } from "./indentation";
 import { insertMultiSceneTemplate, insertSingleSceneTemplate } from "./templates";
+import { createProject } from "./project";
 import type InkwellPlugin from "src/main";
 
 const commandBuilders = [
@@ -32,6 +33,7 @@ const commandBuilders = [
   focusNewSceneField,
   insertMultiSceneTemplate,
   insertSingleSceneTemplate,
+  createProject,
 ];
 
 export function addCommands(plugin: InkwellPlugin) {

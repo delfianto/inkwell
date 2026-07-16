@@ -18,7 +18,8 @@ export default class NewProjectModal extends Modal {
   override onOpen(): void {
     const { contentEl } = this;
 
-    this.setTitle("Create Project");
+    this.modalEl.addClass("inkwell-new-project-modal");
+    this.setTitle("New Inkwell project");
     const entrypoint = contentEl.createDiv("inkwell-add-create-project-root");
 
     const context = appContext(this);

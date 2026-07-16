@@ -6,9 +6,18 @@
     selectedProjectPath,
   } from "../../model/stores";
   import { getContext } from "svelte";
+  import Icon from "../components/Icon.svelte";
+  import { useApp } from "../utils";
+
+  const app = useApp();
 
   const openFileAtPath: (path: string, paneType: PaneType | boolean) => void =
     getContext("onSceneClick");
+
+  function newProject() {
+    // Full id: plugin id + the command id from commands/project.ts.
+    app.commands.executeCommandById("inkwell:inkwell-create-project");
+  }
 
   const projectOptions = $derived(Object.keys($projectsByTitle));
 
@@ -52,11 +61,20 @@
       </button>
     {/if}
   {:else}
-    <p>
-      To begin, find or create a folder somewhere in your vault in which you
-      would like to create your novel. Right-click it and select
-      <code>Create Inkwell Project.</code>
-    </p>
+    <div class="inkwell-empty-state">
+      <div class="inkwell-empty-icon"><Icon iconName="book-text" /></div>
+      <h3>No projects yet</h3>
+      <p class="inkwell-empty-text">
+        An Inkwell project turns a folder into a manuscript — scenes, word
+        counts, and compile.
+      </p>
+      <button type="button" class="mod-cta" onclick={newProject}
+        >＋ New project…</button
+      >
+      <p class="inkwell-empty-hint">
+        or right-click any folder → <code>Create Inkwell Project</code>
+      </p>
+    </div>
   {/if}
 </div>
 
@@ -107,5 +125,54 @@
   .current-project-path:hover {
     color: var(--text-accent);
     cursor: pointer;
+  }
+
+  .inkwell-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--size-4-8) var(--size-4-4);
+    gap: var(--size-4-2);
+  }
+
+  .inkwell-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-4-16);
+    height: var(--size-4-16);
+    border-radius: 50%;
+    background: var(--background-secondary-alt);
+    color: var(--text-accent);
+    margin-bottom: var(--size-4-1);
+  }
+
+  .inkwell-empty-icon :global(svg) {
+    width: var(--icon-l);
+    height: var(--icon-l);
+  }
+
+  .inkwell-empty-state h3 {
+    margin: 0;
+    font-size: var(--font-ui-medium);
+    color: var(--text-normal);
+  }
+
+  .inkwell-empty-text {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    line-height: var(--line-height-tight);
+  }
+
+  .inkwell-empty-state .mod-cta {
+    margin-top: var(--size-4-2);
+  }
+
+  .inkwell-empty-hint {
+    margin: var(--size-4-1) 0 0;
+    color: var(--text-faint);
+    font-size: var(--font-ui-smaller);
   }
 </style>
