@@ -1,26 +1,24 @@
 <script lang="ts">
   import {
+    EBOOK_STRING_KEYS,
+    groupByAct,
+    numberScenes,
+    projectFolderPath,
     projects,
     selectedProject,
     selectedProjectPath,
-    updateProject,
     updateScenesProject,
-  } from "src/model/stores";
-  import Disclosure from "../components/Disclosure.svelte";
-  import { type EbookStringKey } from "src/model/types";
+  } from "src/model";
+  import { getContext, onMount } from "svelte";
   import { FileSuggest } from "../settings/file-suggest";
   import { FolderSuggest } from "../settings/folder-suggest";
   import { normalizePath } from "obsidian";
-  import { onMount } from "svelte";
-  import { projectFolderPath } from "src/model/scene-navigation";
   import { selectedProjectWordCountStatus } from "../stores";
   import { useApp } from "../utils";
 
   const app = useApp();
 
-  let showMetdata = $state(true);
-  let showEbook = $state(false);
-  let showWordCount = $state(true);
+  const openEbookModal: () => void = getContext("openEbookModal");
 
   function titleChanged(event: Event) {
     let newTitle = (event.target as HTMLInputElement).value;
@@ -99,406 +97,221 @@
     }
   }
 
-  // ---- eBook metadata helpers ----
-
-  function updateEbook(mutator: (e: Record<string, any>) => void) {
-    if (!$selectedProjectPath) return;
-    updateProject($selectedProjectPath, (p) => {
-      const next = { ...p.ebook };
-      mutator(next);
-      p.ebook = next;
-    });
-  }
-
-  function ebookStringChanged(field: EbookStringKey) {
-    return (event: Event) => {
-      const raw = (event.target as HTMLInputElement | HTMLTextAreaElement).value;
-      const trimmed = raw.trim();
-      updateEbook((e) => {
-        if (trimmed.length > 0) {
-          e[field] = trimmed;
-        } else {
-          delete e[field];
-        }
-      });
-    };
-  }
-
-  function subjectsChanged(event: Event) {
-    const raw = (event.target as HTMLInputElement).value;
-    const parsed = raw
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-    updateEbook((e) => {
-      if (parsed.length > 0) {
-        e.subjects = parsed;
-      } else {
-        delete e.subjects;
-      }
-    });
-  }
-
-  function seriesIndexChanged(event: Event) {
-    const raw = (event.target as HTMLInputElement).value.trim();
-    const n = raw.length === 0 ? NaN : Number(raw);
-    updateEbook((e) => {
-      if (Number.isFinite(n)) {
-        e.seriesIndex = n;
-      } else {
-        delete e.seriesIndex;
-      }
-    });
-  }
-
-  function generateIdentifier() {
-    // crypto.randomUUID is available in modern Electron / Obsidian.
-    const id =
-      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-        ? `urn:uuid:${crypto.randomUUID()}`
-        : `urn:uuid:${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
-    updateEbook((e) => {
-      e.identifier = id;
-    });
-  }
-
-  let coverInput: HTMLInputElement | null = $state(null);
-  let coverSuggestEl: HTMLInputElement | null = null;
-  // The cover input lives inside `{#if showEbook}` (collapsed by default), so
-  // it does not exist at mount time. Bind FileSuggest the first time the input
-  // appears, and rebind if the underlying element is replaced.
-  $effect(() => {
-    if (coverInput && coverInput !== coverSuggestEl) {
-      new FileSuggest(app, coverInput);
-      coverSuggestEl = coverInput;
-    }
-  });
-
-  const ebook = $derived($selectedProject?.ebook ?? {});
-  const subjectsText = $derived(
-    Array.isArray(ebook.subjects) ? ebook.subjects.join(", ") : ""
+  // ---- Overview ----
+  const wordCount = $derived($selectedProjectWordCountStatus?.project ?? 0);
+  const sceneCount = $derived(
+    $selectedProject?.format === "scenes" ? $selectedProject.scenes.length : 0
+  );
+  const actCount = $derived(
+    $selectedProject?.format === "scenes"
+      ? groupByAct(numberScenes($selectedProject.scenes)).filter(
+          (a) => a.children.length > 0
+        ).length
+      : 0
   );
 
-  let projectCount = $state(0);
-  let sceneCount: number | null = $state(null);
-
-  $effect(() => {
-    if ($selectedProjectWordCountStatus) {
-      const { scene, project } = $selectedProjectWordCountStatus;
-      projectCount = project;
-      sceneCount = $selectedProject!.format === "scenes" ? scene : null;
+  // ---- eBook completion (N / 11) ----
+  const ebookSetCount = $derived.by(() => {
+    const e = $selectedProject?.ebook ?? {};
+    let n = 0;
+    for (const key of EBOOK_STRING_KEYS) {
+      const v = e[key];
+      if (typeof v === "string" && v.trim().length > 0) n += 1;
     }
+    if (Array.isArray(e.subjects) && e.subjects.length > 0) n += 1;
+    if (typeof e.seriesIndex === "number" && Number.isFinite(e.seriesIndex)) n += 1;
+    return n;
   });
+  const EBOOK_FIELD_TOTAL = EBOOK_STRING_KEYS.length + 2;
 
-  function pluralize(
-    count: number,
-    noun: string,
-    pluralNoun: string | null = null
-  ) {
-    if (count === undefined) {
-      return "";
-    }
-    if (count === 1) {
-      return `${count.toLocaleString()} ${noun}`;
-    } else if (pluralNoun) {
-      return `${count.toLocaleString()} ${pluralNoun}`;
-    }
-      return `${count.toLocaleString()} ${noun}s`;
-    
-  }
+  const sceneFolderHelp =
+    "Changing the scene folder does not move scenes. Move them in your vault first, then update this.";
+  const sceneTemplateHelp =
+    "Used as a template when creating new scenes. Templater or the core Templates plugin will process it if enabled.";
 </script>
 
-<div>
+<div class="inkwell-project">
   {#if $selectedProject}
-    <div class="inkwell-project-section">
-      <button
-        type="button"
-        class="inkwell-project-details-section-header"
-        onclick={() => { showMetdata = !showMetdata; }}
-      >
-        <Disclosure collapsed={!showMetdata} />
-        <h4>Project Metadata</h4>
-      </button>
-      {#if showMetdata}
-        <div>
-          <label for="inkwell-project-title">Title</label>
-          <input
-            id="inkwell-project-title"
-            type="text"
-            value={$selectedProject.title}
-            onchange={titleChanged}
-          />
-          {#if $selectedProject.format === "scenes"}
-            <label for="inkwell-project-scene-folder">Scene Folder</label>
-            <input
-              id="inkwell-project-scene-folder"
-              type="text"
-              value={$selectedProject.sceneFolder}
-              bind:this={sceneFolderInput}
-              onblur={sceneFolderChanged}
-            />
-            <p class="inkwell-project-warning">
-              Changing scene folder does not move scenes. If you're moving
-              scenes to a new folder, move them in your vault first, then
-              change this setting.
-            </p>
-            <label for="inkwell-project-scene-template">Scene Template</label>
-            <input
-              id="inkwell-project-scene-template"
-              type="text"
-              value={$selectedProject.sceneTemplate}
-              bind:this={sceneTemplateInput}
-              onblur={sceneTemplateChanged}
-            />
-            <p class="inkwell-project-warning">
-              This file will be used as a template when creating new scenes
-              via the New Scene… field. If you use a templating plugin
-              (Templater or the core plugin) it will be used to process this
-              template.
-            </p>
-          {/if}
-        </div>
-      {/if}
-    </div>
-  {/if}
-  {#if $selectedProject}
-    <div class="inkwell-project-section">
-      <button
-        type="button"
-        class="inkwell-project-details-section-header"
-        onclick={() => { showEbook = !showEbook; }}
-      >
-        <Disclosure collapsed={!showEbook} />
-        <h4>eBook Metadata</h4>
-      </button>
-      {#if showEbook}
-        <div>
-          <label for="inkwell-ebook-author">Author</label>
-          <input
-            id="inkwell-ebook-author"
-            type="text"
-            value={ebook.author ?? ""}
-            onblur={ebookStringChanged("author")}
-          />
-
-          <label for="inkwell-ebook-language">Language</label>
-          <input
-            id="inkwell-ebook-language"
-            type="text"
-            placeholder="en"
-            value={ebook.language ?? ""}
-            onblur={ebookStringChanged("language")}
-          />
-
-          <label for="inkwell-ebook-identifier">Identifier</label>
-          <div class="inkwell-ebook-identifier-row">
-            <input
-              id="inkwell-ebook-identifier"
-              type="text"
-              placeholder="urn:uuid:…"
-              value={ebook.identifier ?? ""}
-              onblur={ebookStringChanged("identifier")}
-            />
-            <button
-              type="button"
-              class="inkwell-ebook-generate"
-              onclick={generateIdentifier}
-              title="Generate a new UUID"
-            >
-              Generate
-            </button>
-          </div>
-
-          <label for="inkwell-ebook-description">Description</label>
-          <textarea
-            id="inkwell-ebook-description"
-            rows="3"
-            value={ebook.description ?? ""}
-            onblur={ebookStringChanged("description")}
-          ></textarea>
-
-          <label for="inkwell-ebook-cover">Cover</label>
-          <input
-            id="inkwell-ebook-cover"
-            type="text"
-            placeholder="assets/cover.png"
-            value={ebook.cover ?? ""}
-            bind:this={coverInput}
-            onblur={ebookStringChanged("cover")}
-          />
-
-          <label for="inkwell-ebook-publisher">Publisher</label>
-          <input
-            id="inkwell-ebook-publisher"
-            type="text"
-            value={ebook.publisher ?? ""}
-            onblur={ebookStringChanged("publisher")}
-          />
-
-          <label for="inkwell-ebook-pubdate">Publication Date</label>
-          <input
-            id="inkwell-ebook-pubdate"
-            type="date"
-            value={ebook.pubdate ?? ""}
-            onblur={ebookStringChanged("pubdate")}
-          />
-
-          <label for="inkwell-ebook-rights">Rights</label>
-          <input
-            id="inkwell-ebook-rights"
-            type="text"
-            value={ebook.rights ?? ""}
-            onblur={ebookStringChanged("rights")}
-          />
-
-          <label for="inkwell-ebook-subjects">Subjects</label>
-          <input
-            id="inkwell-ebook-subjects"
-            type="text"
-            placeholder="fiction, science-fiction"
-            value={subjectsText}
-            onblur={subjectsChanged}
-          />
-          <p class="inkwell-project-warning">Comma-separated. Maps to EPUB <code>dc:subject</code>.</p>
-
-          <label for="inkwell-ebook-series">Series</label>
-          <input
-            id="inkwell-ebook-series"
-            type="text"
-            value={ebook.series ?? ""}
-            onblur={ebookStringChanged("series")}
-          />
-
-          <label for="inkwell-ebook-series-index">Series Index</label>
-          <input
-            id="inkwell-ebook-series-index"
-            type="number"
-            min="0"
-            step="1"
-            value={ebook.seriesIndex ?? ""}
-            onblur={seriesIndexChanged}
-          />
-        </div>
-      {/if}
-    </div>
-  {/if}
-  <div class="inkwell-project-section word-counts">
-    <button
-      type="button"
-      class="inkwell-project-details-section-header"
-      onclick={() => { showWordCount = !showWordCount; }}
-    >
-      <Disclosure collapsed={!showWordCount} />
-      <h4>Word Count</h4>
-    </button>
-    {#if showWordCount}
-      <div>
-        {#if sceneCount}
-          <p title="Word count in this scene of this project.">
-            <strong>Scene:</strong>
-            {pluralize(sceneCount, "word")}
-          </p>
+    <div class="inkwell-overview">
+      <span class="stat"><strong>{wordCount.toLocaleString()}</strong> words</span>
+      {#if $selectedProject.format === "scenes"}
+        <span class="sep">·</span>
+        <span class="stat">{sceneCount} scene{sceneCount === 1 ? "" : "s"}</span>
+        {#if actCount > 0}
+          <span class="sep">·</span>
+          <span class="stat">{actCount} act{actCount === 1 ? "" : "s"}</span>
         {/if}
-        <p title="Word count for this project.">
-          <strong>Project:</strong>
-          {pluralize(projectCount, "word")}
-        </p>
+      {/if}
+    </div>
+
+    <div class="field">
+      <label for="inkwell-project-title">Title</label>
+      <input
+        id="inkwell-project-title"
+        type="text"
+        value={$selectedProject.title}
+        onchange={titleChanged}
+      />
+    </div>
+
+    {#if $selectedProject.format === "scenes"}
+      <div class="field">
+        <label for="inkwell-project-scene-folder">
+          Scene folder
+          <span class="inkwell-help" title={sceneFolderHelp} aria-label={sceneFolderHelp}
+            >ⓘ</span
+          >
+        </label>
+        <input
+          id="inkwell-project-scene-folder"
+          type="text"
+          value={$selectedProject.sceneFolder}
+          bind:this={sceneFolderInput}
+          onblur={sceneFolderChanged}
+        />
+      </div>
+
+      <div class="field">
+        <label for="inkwell-project-scene-template">
+          Scene template
+          <span
+            class="inkwell-help"
+            title={sceneTemplateHelp}
+            aria-label={sceneTemplateHelp}>ⓘ</span
+          >
+        </label>
+        <input
+          id="inkwell-project-scene-template"
+          type="text"
+          value={$selectedProject.sceneTemplate}
+          bind:this={sceneTemplateInput}
+          onblur={sceneTemplateChanged}
+        />
       </div>
     {/if}
-  </div>
+
+    <button type="button" class="inkwell-ebook-launcher" onclick={() => openEbookModal()}>
+      <span class="inkwell-ebook-launcher-main">
+        <span class="inkwell-ebook-launcher-title">eBook metadata</span>
+        <span class="inkwell-ebook-launcher-sub">Author · cover · ISBN · series…</span>
+      </span>
+      <span class="inkwell-ebook-launcher-count"
+        >{ebookSetCount} / {EBOOK_FIELD_TOTAL} set</span
+      >
+      <span class="inkwell-ebook-launcher-chevron">›</span>
+    </button>
+  {/if}
 </div>
 
 <style>
-  .inkwell-project-section {
-    margin-top: var(--size-4-4);
-    padding-bottom: var(--size-4-2);
-    padding-left: var(--size-4-8);
-  }
-
-  .inkwell-project-section + .inkwell-project-section {
-    border-top: var(--border-width) solid var(--background-modifier-border);
-    padding-top: var(--size-4-4);
-  }
-
-  .inkwell-project-details-section-header {
+  .inkwell-project {
     display: flex;
-    flex-direction: row;
-    justify-content: start;
+    flex-direction: column;
+    gap: var(--size-4-3);
+    padding: var(--size-4-2) 0;
+  }
+
+  .inkwell-overview {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--size-4-1);
+    padding: var(--size-4-2) var(--size-4-3);
+    background: var(--background-secondary);
+    border-radius: var(--radius-m);
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+  }
+
+  .inkwell-overview .stat strong {
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+  }
+
+  .inkwell-overview .sep {
+    color: var(--text-faint);
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-2-2);
+  }
+
+  .field label {
+    display: flex;
     align-items: center;
-    cursor: pointer;
-    margin-left: calc(var(--size-4-6) * -1);
-    background: none;
-    border: none;
-    box-shadow: none;
-    outline: none;
-    padding: 0;
+    gap: var(--size-4-1);
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+  }
+
+  .field input {
+    width: 100%;
+  }
+
+  .inkwell-help {
+    color: var(--text-faint);
+    cursor: help;
+    font-size: var(--font-ui-smaller);
+  }
+
+  .inkwell-help:hover {
+    color: var(--text-accent);
+  }
+
+  .inkwell-ebook-launcher {
+    display: flex;
+    align-items: center;
+    gap: var(--size-4-2);
     width: 100%;
     text-align: left;
-  }
-
-  .inkwell-project-details-section-header:hover,
-  .inkwell-project-details-section-header:focus,
-  .inkwell-project-details-section-header:active {
-    background: none;
+    padding: var(--size-4-2) var(--size-4-3);
+    background: var(--background-secondary);
+    border: var(--border-width) solid var(--background-modifier-border);
+    border-radius: var(--radius-m);
+    cursor: pointer;
     box-shadow: none;
-    outline: none;
+    height: auto;
   }
 
-  h4 {
-    font-size: var(--font-ui-medium);
-    color: var(--text-normal);
-    user-select: none;
-    font-weight: inherit;
-    margin: 0 0 0 var(--size-4-4);
+  .inkwell-ebook-launcher:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--background-modifier-border-hover);
   }
 
-  input {
-    width: 100%;
-  }
-
-  label {
-    display: block;
-    font-size: var(--font-ui-smaller);
-    color: var(--text-muted);
-    margin-top: var(--size-4-4);
-    line-height: var(--line-height-tight);
-  }
-
-  p.inkwell-project-warning {
-    color: var(--text-faint);
-    font-size: var(--font-smallest);
-    margin: var(--size-2-1) 0 0 var(--size-2-1);
-    line-height: normal;
-  }
-
-  .word-counts p {
-    margin: var(--size-4-2) 0;
-    font-size: var(--font-smallest);
-    color: var(--text-muted);
-  }
-
-  .word-counts p strong {
-    color: var(--text-normal);
-  }
-
-  textarea {
-    width: 100%;
-    resize: vertical;
-    font-family: inherit;
-  }
-
-  .inkwell-ebook-identifier-row {
+  .inkwell-ebook-launcher-main {
     display: flex;
-    gap: var(--size-4-2);
-    align-items: center;
-  }
-
-  .inkwell-ebook-identifier-row input {
+    flex-direction: column;
+    gap: var(--size-2-1);
     flex: 1;
+    min-width: 0;
   }
 
-  .inkwell-ebook-generate {
-    flex-shrink: 0;
+  .inkwell-ebook-launcher-title {
+    font-weight: 600;
+    color: var(--text-normal);
+  }
+
+  .inkwell-ebook-launcher-sub {
+    color: var(--text-faint);
     font-size: var(--font-ui-smaller);
+  }
+
+  .inkwell-ebook-launcher-count {
+    flex-shrink: 0;
+    padding: var(--size-2-1) var(--size-4-2);
+    background: var(--background-secondary-alt);
+    color: var(--text-accent);
+    border-radius: var(--radius-l);
+    font-size: var(--font-ui-smaller);
+    font-weight: 600;
+  }
+
+  .inkwell-ebook-launcher-chevron {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: var(--font-ui-large);
+    line-height: 1;
   }
 </style>

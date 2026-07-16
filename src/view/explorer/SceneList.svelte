@@ -16,15 +16,17 @@
     formatSceneNumber,
     type IndentedScene,
     type MultipleSceneProject,
-    numberScenes,
     pluginSettings,
     projects,
+    type ProjectWordCounts,
+    projectWordCounts,
     scenePath,
     selectedProject,
   } from "src/model";
   import { getContext, onDestroy } from "svelte";
   import { Keymap, Notice, type PaneType, Platform, TFile } from "obsidian";
   import Disclosure from "../components/Disclosure.svelte";
+  import { enrichScenes } from "./scene-items";
   import type Sortable from "sortablejs";
   import SortableList from "../sortable/SortableList.svelte";
 
@@ -39,9 +41,6 @@
     }
   });
 
-  const makeScenePath: (project: MultipleSceneProject, scene: string) => string =
-    getContext("makeScenePath");
-
   interface SceneItem {
     id: string;
     name: string;
@@ -52,6 +51,7 @@
     hidden: boolean;
     numbering: number[];
     status: string | undefined;
+    wordCount: number | undefined;
   }
 
   let collapsedItems: string[] = $state([]);
@@ -61,7 +61,12 @@
 
   let items: SceneItem[] = $derived(
     $selectedProject && $selectedProject.format === "scenes"
-      ? itemsFromScenes($selectedProject.scenes, collapsedItems, metadataTick)
+      ? itemsFromScenes(
+          $selectedProject,
+          collapsedItems,
+          metadataTick,
+          $projectWordCounts
+        )
       : []
   );
 
@@ -70,54 +75,40 @@
   let draggingID: string | null = $state(null);
 
   function itemsFromScenes(
-    indentedScenes: IndentedScene[],
+    project: MultipleSceneProject,
     _collapsedItems: string[],
-    _tick: number
+    _tick: number,
+    wordCounts: ProjectWordCounts
   ): SceneItem[] {
-    const scenes = numberScenes(indentedScenes);
+    const scenes = enrichScenes(app, project, wordCounts);
     const itemsToReturn: SceneItem[] = [];
     let ignoringUntilIndent = Infinity;
 
-    scenes.forEach(({ title, indent, numbering }, index) => {
+    scenes.forEach((scene, index) => {
+      const { name, indent } = scene;
       const hidden = indent > ignoringUntilIndent;
       if (!hidden) {
         ignoringUntilIndent = Infinity;
       }
 
-      const collapsed = _collapsedItems.contains(title);
+      const collapsed = _collapsedItems.contains(name);
       if (collapsed) {
         ignoringUntilIndent = Math.min(ignoringUntilIndent, indent);
       }
 
       const nextScene = index < scenes.length - 1 ? scenes[index + 1] : false;
-      const path = makeScenePath($selectedProject as MultipleSceneProject, title);
-      const file = app.vault.getAbstractFileByPath(path);
-      let status;
-      let displayName = title;
-      if (file && file instanceof TFile) {
-        const metadata = app.metadataCache.getFileCache(file);
-        if (metadata && metadata.frontmatter) {
-          if (metadata.frontmatter["status"]) {
-            status = `${metadata.frontmatter["status"]}`;
-          }
-          const fmTitle = metadata.frontmatter["title"];
-          if (typeof fmTitle === "string" && fmTitle.trim().length > 0) {
-            displayName = fmTitle.trim();
-          }
-        }
-      }
-      const item = {
-        id: title,
-        name: title,
-        displayName,
+      itemsToReturn.push({
+        id: name,
+        name,
+        displayName: scene.displayName,
         indent,
-        path,
+        path: scene.path,
         collapsible: nextScene && nextScene.indent > indent,
         hidden,
-        numbering,
-        status,
-      };
-      itemsToReturn.push(item);
+        numbering: scene.numbering,
+        status: scene.status,
+        wordCount: scene.wordCount,
+      });
     });
 
     return itemsToReturn;
@@ -218,28 +209,28 @@
       return;
     }
     const { x, y } = event;
-    let element = document.elementFromPoint(x, y);
-    if (element?.id.startsWith("inkwell-scene-")) {
-      element = element.parentElement;
-    }
-    const sPath =
-      element && element instanceof HTMLElement && element.dataset.scenePath;
-    if (!sPath) {
+    const target = document.elementFromPoint(x, y);
+    // Walk up to the row container regardless of which child was clicked
+    // (title, word count, status bullet, …).
+    const element =
+      target instanceof HTMLElement
+        ? target.closest<HTMLElement>("[data-scene-path]")
+        : null;
+    const sPath = element?.dataset.scenePath;
+    if (!element || !sPath) {
       return;
     }
     onContextClick(sPath, x, y, () => {
-      if (element && element instanceof HTMLElement) {
-        const path = element.dataset.scenePath;
-        editingPath = path ?? null;
-        const innerElement = activeDocument.querySelector(
-          `[data-item-path='${path}']`
-        );
-        if (!(innerElement instanceof HTMLElement)) {
-          return;
-        }
-        originalName = innerElement.dataset.itemName ?? null;
-        setTimeout(() => selectElementContents(innerElement), 0);
+      const path = element.dataset.scenePath;
+      editingPath = path ?? null;
+      const innerElement = activeDocument.querySelector(
+        `[data-item-path='${path}']`
+      );
+      if (!(innerElement instanceof HTMLElement)) {
+        return;
       }
+      originalName = innerElement.dataset.itemName ?? null;
+      setTimeout(() => selectElementContents(innerElement), 0);
     });
   }
 
@@ -293,6 +284,12 @@
 
   function numberLabel(item: SceneItem): string {
     return formatSceneNumber(item.numbering);
+  }
+
+  function wordCountLabel(item: SceneItem): string | null {
+    return typeof item.wordCount === "number" && item.wordCount > 0
+      ? item.wordCount.toLocaleString()
+      : null;
   }
 
   // Undo/Redo
@@ -364,7 +361,7 @@
       {#snippet children(item)}
         <div
           class="scene-container{item.hidden ? ' hidden' : ''}{item.collapsible ? ' collapsible' : ''}"
-          style="padding-left: calc(({item.indent} * var(--inkwell-explorer-indent-size)) + 6px {item.collapsible ? '' : '+ var(--size-4-4)'});"
+          style="padding-left: calc(({item.indent} * var(--inkwell-explorer-indent-size)) + var(--size-4-2));"
           class:selected={$activeFile && $activeFile.path === item.path}
           role="listitem"
           oncontextmenu={(e) => { e.preventDefault(); onContext(e); }}
@@ -373,14 +370,17 @@
           data-scene-name={item.name}
           data-scene-status={item.status}
         >
-          {#if item.collapsible}
-            <Disclosure
-              collapsed={collapsedItems.contains(item.id)}
-              onclick={() => collapseItem(item.id)}
-            />
-          {/if}
+          <span class="inkwell-scene-grip" aria-hidden="true">⠿</span>
+          <span class="inkwell-scene-lead">
+            {#if item.collapsible}
+              <Disclosure
+                collapsed={collapsedItems.contains(item.id)}
+                onclick={() => collapseItem(item.id)}
+              />
+            {/if}
+          </span>
           <div
-            style="width: 100%;"
+            class="inkwell-scene-click"
             role="button"
             tabindex="0"
             data-scene-path={item.path}
@@ -393,20 +393,26 @@
             {#if $pluginSettings.numberScenes}
               <span class="inkwell-scene-number">{numberLabel(item)}</span>
             {/if}
-            <div
+            <span
               id={`inkwell-scene-${item.name}`}
+              class="inkwell-scene-title"
+              class:editing={item.path === editingPath}
               data-item-path={item.path}
               data-item-name={item.name}
-              style="display: inline;"
               role={item.path === editingPath ? "textbox" : undefined}
               onkeydown={item.path === editingPath ? onKeydown : null}
               onblur={item.path === editingPath ? onBlur : null}
               contenteditable={item.path === editingPath}
               title={item.displayName !== item.name ? item.name : undefined}
-            >
-              {item.path === editingPath ? item.name : item.displayName}
-            </div>
+            >{item.path === editingPath ? item.name : item.displayName}</span>
           </div>
+          {#if wordCountLabel(item)}
+            <span class="inkwell-scene-wordcount">{wordCountLabel(item)}</span>
+          {/if}
+          {#if item.status}
+            <span class="inkwell-scene-status" title={`status: ${item.status}`}
+            ></span>
+          {/if}
         </div>
       {/snippet}
     </SortableList>
@@ -470,41 +476,79 @@
   }
 
   .scene-container {
+    position: relative;
     display: flex;
     flex-direction: row;
     align-items: center;
+    gap: var(--size-4-1);
     border: var(--border-width) solid transparent;
     border-radius: var(--radius-s);
-    cursor: pointer;
+    cursor: grab;
     color: var(--nav-item-color);
     font-size: var(--nav-item-size);
     font-weight: var(--nav-item-weight);
     line-height: var(--line-height-tight);
     padding: var(--size-4-1) var(--size-4-2);
-    white-space: normal;
-  }
-
-  .scene-container.collapsible {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    border: var(--border-width) solid transparent;
-    border-radius: var(--radius-s);
-    cursor: pointer;
-    color: var(--nav-item-color);
-    font-size: var(--nav-item-size);
-    font-weight: var(--nav-item-weight);
-    line-height: var(--line-height-tight);
-    padding: var(--size-4-1) var(--size-4-2);
-    white-space: normal;
   }
 
   .scene-container.hidden {
     display: none;
   }
 
-  .scene-container *:nth-child(2) {
-    margin-left: var(--size-4-2);
+  /* Discoverable drag: a grab handle fades in over the left gutter on hover
+     (purely a signifier — the whole row is the SortableJS drag target). */
+  .inkwell-scene-grip {
+    position: absolute;
+    left: var(--size-2-1);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-faint);
+    font-size: var(--font-smaller);
+    line-height: 1;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s ease-in-out;
+  }
+
+  :not(.dragging) .scene-container:hover .inkwell-scene-grip {
+    opacity: 1;
+  }
+
+  /* Fixed-width lead gutter holds the disclosure chevron (when collapsible) so
+     numbers/titles align whether or not a row has children. */
+  .inkwell-scene-lead {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: var(--size-4-3);
+  }
+
+  .inkwell-scene-click {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    gap: var(--size-4-1);
+  }
+
+  .inkwell-scene-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .inkwell-scene-title.editing {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .inkwell-scene-wordcount {
+    flex-shrink: 0;
+    color: var(--text-faint);
+    font-size: var(--font-smaller);
+    font-variant-numeric: tabular-nums;
   }
 
   .selected,
@@ -513,14 +557,18 @@
     color: var(--text-normal);
   }
 
-  .scene-container:active {
-    background-color: inherit;
+  .selected .inkwell-scene-wordcount,
+  :not(.dragging) .scene-container:hover .inkwell-scene-wordcount {
     color: var(--text-muted);
   }
 
+  .scene-container:active {
+    cursor: grabbing;
+  }
+
   .inkwell-scene-number {
+    flex-shrink: 0;
     color: var(--text-muted);
-    margin-right: var(--size-4-1);
     font-weight: bold;
   }
 
