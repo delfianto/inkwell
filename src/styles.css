@@ -67,6 +67,10 @@
   width: min(600px, 90vw);
 }
 
+.modal.inkwell-ebook-modal {
+  width: min(680px, 92vw);
+}
+
 .inkwell-settings-user-steps {
   padding-inline-start: 1em;
   margin-block-start: 0;
