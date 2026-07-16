@@ -80,6 +80,7 @@
 
 <style>
   #project-picker-container {
+    flex-shrink: 0;
     margin-bottom: 0;
   }
 
