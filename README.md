@@ -2,7 +2,7 @@
 
 An Obsidian plugin for writing novels, screenplays, and other long-form projects.
 
-Inkwell began as a personal fork of [kevboh/longform](https://github.com/kevboh/longform) and has since diverged into its own project. Upstream Longform is no longer actively maintained, so Inkwell continues independently — with a rebuilt toolchain and a rethought way of storing project metadata in your vault, primarily to:
+Inkwell began as a personal fork of [kevboh/longform](https://github.com/kevboh/longform) and has since diverged into its own project. Upstream Longform is no longer actively maintained, so Inkwell continues independently — with a **ground-up UI reimplementation**, a rebuilt toolchain, and a rethought way of storing project metadata in your vault, primarily to:
 
 - make `Index.md` frontmatter safe to round-trip through Obsidian's Properties UI without nuking your project, and
 - treat eBook / Dublin Core metadata as a first-class part of the project — no separate sidecar files.
@@ -18,9 +18,30 @@ This is a personal project, built to scratch my own writing setup and maintained
 - **Flat frontmatter schema** — every project key lives at the top level of `Index.md` so Obsidian's Properties UI can edit it without flattening or losing structure.
 - **eBook metadata first-class** — `author`, `language`, `identifier`, `description`, `cover`, `publisher`, `pubdate`, `rights`, `subjects`, `series`, `seriesIndex` live alongside `title` / `workflow` / `scenes`. An EPUB-producing compile step can read them directly; no sidecar file.
 - **Scene display labels** — the Scenes tab uses each scene file's `frontmatter.title` as its row label (live-updating), falling back to the filename. Lets you name files concisely (`ch01-s02.md`) while displaying a friendlier title.
-- The rest of Longform's feature set still works: sidebar pane, reorderable nested scene list, per-project/per-scene word counts in the Project tab, compile workflows, single-scene and multi-scene projects, multiple drafts grouped by title. Writing-session goals and the status-bar word count have been removed — Obsidian's built-in word-count statistic covers the latter.
+- **Redesigned interface** — nearly every writing surface was reimplemented: three Scenes views (List / Cards / Outline) with colour-coded status and per-scene word counts, a lean Project tab, an eBook metadata modal, an action-first New Project modal, and a full-pane Compile builder. See [A redesigned interface](#a-redesigned-interface).
+- The full Longform workflow is intact underneath: a sidebar pane, reorderable nested scene list, per-project/per-scene word counts, compile workflows, single-scene and multi-scene projects, and multiple drafts grouped by title. Writing-session goals and the status-bar word count have been removed — Obsidian's built-in word-count statistic covers the latter.
 
 Because Inkwell uses its own plugin id (`inkwell`), it can be installed alongside upstream Longform without conflict.
+
+## A redesigned interface
+
+The UI Inkwell inherited from Longform worked but had never had a design pass. `2.0.0` rebuilt nearly every surface — driven by a written usability [audit](./docs/ui-audit/README.md) and [mockups](./docs/ui-audit/mockups/MOCKUPS.md), both kept in the repo.
+
+<table>
+  <tr>
+    <td width="34%" valign="top"><img src="docs/images/scenes-cards.png" alt="Scenes — Cards view"></td>
+    <td width="66%" valign="top"><img src="docs/images/compile-builder.png" alt="Compile builder"></td>
+  </tr>
+  <tr>
+    <td valign="top"><b>Scenes</b> — List / Cards / Outline views with colour-coded status, per-scene word counts, and collapsible acts.</td>
+    <td valign="top"><b>Compile</b> — a full-pane builder: one-line steps with colour-coded kinds on the left, config + live preview on the right, Run always in reach.</td>
+  </tr>
+</table>
+
+There's also a lean Project tab, a wide **eBook metadata modal**, and an action-first **New Project** modal.
+
+- **[Interface guide](./docs/interface.md)** — a walkthrough of every surface.
+- **[The UI redesign](./docs/ui-redesign.md)** — the full before/after.
 
 ## Schema vs. upstream Longform `2.x`
 
@@ -29,7 +50,7 @@ Because Inkwell uses its own plugin id (`inkwell`), it can be installed alongsid
 | Discriminator | Nested `longform:` object with `format:` inside | Top-level `inkwell: scenes` or `inkwell: single` |
 | Project keys | Nested under `longform.*` | Top-level — `title`, `workflow`, `sceneFolder`, `scenes`, `ignoredFiles`, `sceneTemplate` |
 | Scene hierarchy | Nested YAML arrays (`- - second scene`) | Flat array with `> ` prefix tokens (`"> second scene"`) — round-trips safely through Obsidian's Properties UI |
-| eBook metadata | Not handled; users keep a sidecar file | First-class top-level keys (see above) plus a collapsible "eBook Metadata" section in the Project tab, with a Generate-UUID button and FileSuggest for cover |
+| eBook metadata | Not handled; users keep a sidecar file | First-class top-level keys (see above), edited through a dedicated **eBook metadata modal** (grouped Identity / Publication / Classification, subject chips, cover thumbnail, Generate-UUID) launched from the Project tab |
 | Scene display label | Filename only | `frontmatter.title` of each scene file, falling back to filename |
 | Migration | Plugin runs a migration on first launch | **None.** Files using the legacy nested form are silently ignored. |
 
@@ -100,7 +121,7 @@ BRAT pulls the release assets into `.obsidian/plugins/inkwell/`, enables the plu
 
 ## Getting started
 
-UI flows for creating, reordering, and compiling projects are inherited from Longform. Refer to upstream's [README](https://github.com/kevboh/longform/blob/main/README.md) for the visual walkthrough. The main practical difference is the on-disk `Index.md` schema, covered above.
+The **[Interface guide](./docs/interface.md)** is the visual walkthrough — creating a project, the three Scenes views, scene status colours, the Project tab, the eBook modal, and the Compile builder. Inkwell's UI is a ground-up reimplementation, so upstream Longform's walkthrough no longer matches; the on-disk `Index.md` schema (covered above) is the other practical difference.
 
 ## Stack
 
@@ -147,4 +168,4 @@ Inkwell's own code is released under the [MIT License](./LICENSE). Portions inhe
 
 ## Credits
 
-Inkwell stands entirely on [kevboh's](https://github.com/kevboh) original [Longform](https://github.com/kevboh/longform). The plugin architecture, compile pipeline, sidebar UX, and most of what makes it useful were all there before I touched it. The community [collection of compile steps](https://github.com/obsidian-community/longform-compile-steps) continues to apply — the compile step API is unchanged.
+Inkwell stands entirely on [kevboh's](https://github.com/kevboh) original [Longform](https://github.com/kevboh/longform). The plugin architecture, compile pipeline, scene/draft model, and most of what makes it useful were all there before I touched it; the `2.0.0` redesign restyles and re-lays-out those surfaces, but the engine underneath is Longform's. The community [collection of compile steps](https://github.com/obsidian-community/longform-compile-steps) continues to apply — the compile step API is unchanged.

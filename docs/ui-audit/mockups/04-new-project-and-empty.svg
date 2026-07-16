@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560" font-family="Inter, -apple-system, 'Segoe UI', sans-serif">
+  <style>
+    .norm{fill:#dcdcdc} .mut{fill:#9b9b9b} .faint{fill:#6b6b6b}
+    .h{fill:#ededed;font-weight:600} .accent{fill:#a78bfa} .mono{font-family:'SF Mono',ui-monospace,Menlo,monospace}
+    .sm{font-size:11px} .xs{font-size:10px;letter-spacing:.06em} .base{font-size:13px} .lg{font-size:15px;font-weight:600}
+  </style>
+  <rect width="1000" height="560" fill="#1e1e1e"/>
+  <text x="24" y="30" class="h lg">New Project modal (action-first) + empty state</text>
+
+  <!-- ============ LEFT: EMPTY STATE (sidebar, no projects) ============ -->
+  <rect x="24" y="56" width="320" height="452" rx="10" fill="#191919" stroke="#2e2e2e"/>
+  <text x="40" y="52" class="faint sm">Inkwell pane · no projects yet</text>
+
+  <!-- icon -->
+  <circle cx="184" cy="168" r="27" fill="#26243a"/>
+  <g transform="translate(172,156)" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
+    <path d="M8 7h6"/><path d="M8 11h8"/>
+  </g>
+
+  <text x="184" y="232" text-anchor="middle" class="h" font-size="15">No projects yet</text>
+  <text x="184" y="258" text-anchor="middle" class="mut sm">An Inkwell project turns a folder into a</text>
+  <text x="184" y="274" text-anchor="middle" class="mut sm">manuscript — scenes, word counts, compile.</text>
+
+  <!-- primary CTA -->
+  <rect x="96" y="300" width="176" height="36" rx="8" fill="#8b5cf6"/>
+  <text x="184" y="323" text-anchor="middle" fill="#fff" class="base" font-weight="600">＋  New project…</text>
+
+  <text x="184" y="366" text-anchor="middle" class="faint sm">or right-click any folder →</text>
+  <text x="184" y="382" text-anchor="middle" class="faint sm">“Create Inkwell project”</text>
+
+  <text x="24" y="534" class="faint sm">An icon, one sentence, and a real CTA — not a paragraph.</text>
+
+  <!-- ============ RIGHT: NEW PROJECT MODAL ============ -->
+  <rect x="384" y="56" width="592" height="452" rx="12" fill="#1d1d1d" stroke="#3a3a3a"/>
+  <text x="408" y="96" class="h" font-size="17">New Inkwell project</text>
+  <path d="M942 84l14 14M956 84l-14 14" stroke="#9b9b9b" stroke-width="1.6" stroke-linecap="round"/>
+  <text x="408" y="120" class="faint sm">Created in “simple-project” · you can rename or move it anytime.</text>
+  <line x1="408" y1="134" x2="952" y2="134" stroke="#2e2e2e"/>
+
+  <!-- type choice cards -->
+  <text x="408" y="158" class="faint xs">PROJECT TYPE</text>
+  <!-- Multi (selected) -->
+  <rect x="408" y="168" width="260" height="92" rx="9" fill="#26243a" stroke="#8b5cf6"/>
+  <g transform="translate(424,184)" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="14" height="17" rx="2"/><path d="M0 6v15h15"/>
+  </g>
+  <text x="452" y="196" class="h base">Multi-scene</text>
+  <text x="424" y="222" class="mut sm">Ordered notes + an index file.</text>
+  <text x="424" y="238" class="mut sm">Novels &amp; long works.</text>
+  <circle cx="650" cy="184" r="9" fill="#8b5cf6"/><path d="M646 184l3 3 5-6" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Single -->
+  <rect x="684" y="168" width="260" height="92" rx="9" fill="#202020" stroke="#333"/>
+  <g transform="translate(700,184)" fill="none" stroke="#9b9b9b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 2h9l5 5v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M8 12h7M8 16h5"/>
+  </g>
+  <text x="728" y="196" class="norm base" font-weight="600">Single note</text>
+  <text x="700" y="222" class="mut sm">One self-contained note.</text>
+  <text x="700" y="238" class="mut sm">Short stories &amp; essays.</text>
+
+  <!-- title field -->
+  <text x="408" y="292" class="mut sm">Title</text>
+  <rect x="408" y="300" width="536" height="42" rx="8" fill="#202020" stroke="#8b5cf6"/>
+  <text x="424" y="327" class="norm" font-size="16">The Winter Garden</text>
+
+  <!-- live path preview -->
+  <rect x="408" y="356" width="536" height="34" rx="7" fill="#161616"/>
+  <path d="M424 369l7 5-7 5" stroke="#6b6b6b" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="442" y="378" class="mono sm"><tspan class="faint">simple-project / </tspan><tspan class="mut">The Winter Garden</tspan><tspan class="faint"> / </tspan><tspan class="accent">Index.md</tspan></text>
+
+  <line x1="408" y1="412" x2="952" y2="412" stroke="#2e2e2e"/>
+  <!-- footer -->
+  <rect x="736" y="424" width="82" height="32" rx="7" fill="none" stroke="#3a3a3a"/>
+  <text x="777" y="444" text-anchor="middle" class="mut base">Cancel</text>
+  <rect x="828" y="424" width="124" height="32" rx="7" fill="#8b5cf6"/>
+  <text x="890" y="444" text-anchor="middle" fill="#fff" class="base" font-weight="600">Create project</text>
+
+  <text x="384" y="534" class="faint sm">Type + name lead; descriptions shrink into the cards; live path; Create always visible (disabled until a title is typed).</text>
+</svg>
