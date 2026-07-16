@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # App dependencies (bun.lock). Patch/minor updates are grouped into one PR
+  # per week so dependabot-automerge.yml can fast-track them; majors (e.g. a
+  # compiler rewrite like TypeScript 7) are left ungrouped so each gets its
+  # own PR for manual review.
+  - package-ecosystem: "bun"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      routine:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 10
+
+  # Actions used by our own workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "github-actions"
