@@ -5,6 +5,7 @@ import {
   ICON_SVG,
   InkwellSettingsTab,
   LeafStyler,
+  sceneViewMode,
   selectedTab,
 } from "./view";
 import {
@@ -15,6 +16,7 @@ import {
   TFolder,
   type WorkspaceLeaf,
 } from "obsidian";
+import { CompilePane, VIEW_TYPE_INKWELL_COMPILE } from "./view/compile/CompilePane";
 import {
   DEFAULT_SETTINGS,
   initialized,
@@ -60,8 +62,10 @@ export default class InkwellPlugin extends Plugin {
   override async onload(): Promise<void> {
     console.log(`[Inkwell] Starting Inkwell ${this.manifest.version}…`);
     addIcon(ICON_NAME, ICON_SVG);
+    this.detectScrollbarStyle();
 
     this.registerView(VIEW_TYPE_INKWELL_EXPLORER, (leaf: WorkspaceLeaf) => new ExplorerPane(leaf));
+    this.registerView(VIEW_TYPE_INKWELL_COMPILE, (leaf: WorkspaceLeaf) => new CompilePane(leaf));
 
     this.registerEvent(
       this.app.workspace.on("file-menu", (menu, file: TAbstractFile) => {
@@ -102,6 +106,15 @@ export default class InkwellPlugin extends Plugin {
     await this.loadSettings();
     this.addSettingTab(new InkwellSettingsTab(this.app, this));
 
+    // Persist the Scenes sub-view choice. The store is seeded from settings in
+    // loadSettings(); mirror later changes back into pluginSettings so the
+    // passthrough-save subscription above writes them to disk.
+    this.unsubscribers.push(
+      sceneViewMode.subscribe((mode) => {
+        pluginSettings.update((s) => (s ? { ...s, sceneViewMode: mode } : s));
+      }),
+    );
+
     this.projectStoreSync = new ProjectStoreSync(this.app, this.registerEvent.bind(this));
 
     this.app.workspace.onLayoutReady(this.postLayoutInit.bind(this));
@@ -136,6 +149,31 @@ export default class InkwellPlugin extends Plugin {
     this.unsubscribers.forEach((u) => u());
     this.wordCountTracker.destroy();
     this.app.workspace.getLeavesOfType(VIEW_TYPE_INKWELL_EXPLORER).forEach((leaf) => leaf.detach());
+    this.app.workspace.getLeavesOfType(VIEW_TYPE_INKWELL_COMPILE).forEach((leaf) => leaf.detach());
+    document.body.classList.remove("inkwell-classic-scrollbars");
+    document.body.style.removeProperty("--inkwell-scrollbar-width");
+  }
+
+  /**
+   * Flag the body when the environment uses classic, space-taking scrollbars
+   * (Obsidian's styled scrollbars, or macOS "always show scroll bars"). Only
+   * then does the explorer auto-hide its scroll thumb — native overlay
+   * scrollbars already auto-hide and must not be switched to a classic bar.
+   */
+  private detectScrollbarStyle(): void {
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:absolute;top:-9999px;width:50px;height:50px;overflow:scroll;";
+    document.body.append(probe);
+    const width = probe.offsetWidth - probe.clientWidth;
+    probe.remove();
+    const classic = width > 0;
+    document.body.classList.toggle("inkwell-classic-scrollbars", classic);
+    if (classic) {
+      // Match the custom scrollbar to the native width so there's no reflow.
+      document.body.style.setProperty("--inkwell-scrollbar-width", `${width}px`);
+    } else {
+      document.body.style.removeProperty("--inkwell-scrollbar-width");
+    }
   }
 
   async loadSettings(): Promise<void> {
@@ -146,6 +184,7 @@ export default class InkwellPlugin extends Plugin {
     ) as InkwellPluginSettings;
     pluginSettings.set(trackedSettings);
     selectedProjectPath.set(trackedSettings.selectedProjectPath);
+    sceneViewMode.set(trackedSettings.sceneViewMode);
 
     // User scripts load imperatively first; workflows may reference them.
     this.userScriptObserver = new UserScriptObserver(this.app.vault);

@@ -6,7 +6,6 @@ import {
   type MultipleSceneProject,
   type Project,
   projects,
-  scenePath,
   selectedProject,
 } from "src/model";
 import {
@@ -20,6 +19,7 @@ import {
 } from "obsidian";
 import { mount, unmount } from "svelte";
 import AddStepModal from "../modals/AddStepModal";
+import EbookModal from "../modals/EbookModal";
 import ExplorerView from "./ExplorerView.svelte";
 import { get } from "svelte/store";
 
@@ -74,11 +74,6 @@ export class ExplorerPane extends ItemView {
     context.set("showConfirmModal", (options: ConfirmActionOptions) => {
       new ConfirmActionModal(this.app, options).open();
     });
-
-    // Create a fully-qualified path to a scene from its name.
-    context.set("makeScenePath", (project: MultipleSceneProject, sceneName: string) =>
-      scenePath(sceneName, project, this.app.vault),
-    );
 
     // Context function for opening scene notes on click
     context.set("onSceneClick", (path: string, paneType: PaneType | boolean) => {
@@ -198,6 +193,7 @@ export class ExplorerPane extends ItemView {
     );
 
     context.set("openCompileStepMenu", () => new AddStepModal(this.app).open());
+    context.set("openEbookModal", () => new EbookModal(this.app).open());
     context.set(
       "showCompileActionsMenu",
       (

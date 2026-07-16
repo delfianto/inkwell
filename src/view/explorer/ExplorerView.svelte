@@ -1,29 +1,11 @@
 <script lang="ts">
   import { selectedProject, waitingForSync } from "src/model/stores";
-  import CompileView from "../compile/CompileView.svelte";
-  import NewSceneField from "./NewSceneField.svelte";
-  import { Platform } from "obsidian";
   import ProjectDetails from "./ProjectDetails.svelte";
   import ProjectPicker from "./ProjectPicker.svelte";
-  import SceneList from "./SceneList.svelte";
+  import ProjectToolbar from "./ProjectToolbar.svelte";
+  import ScenesPanel from "./ScenesPanel.svelte";
   import { selectedTab } from "../stores";
   import Tab from "./Tab.svelte";
-
-  $effect(() => {
-    if (
-      $selectedProject &&
-      $selectedProject.format === "single" &&
-      $selectedTab === "Scenes"
-    ) {
-      $selectedTab = "Project";
-    }
-  });
-
-  $effect(() => {
-    if (Platform.isMobile && $selectedTab === "Compile") {
-      $selectedTab = "Project";
-    }
-  });
 </script>
 
 {#if $waitingForSync}
@@ -36,74 +18,62 @@
 {:else}
   <div class="inkwell-explorer">
     <ProjectPicker />
-    {#if $selectedProject && $selectedProject.format === "scenes"}
-      <div>
+    {#if $selectedProject}
+      <ProjectToolbar />
+      {#if $selectedProject.format === "scenes"}
         <div class="tabs">
           <div class="tab-list">
             <Tab tab="Scenes" />
             <Tab tab="Project" />
-            {#if !Platform.isMobile}
-              <Tab tab="Compile" />
-            {/if}
           </div>
         </div>
         {#if $selectedTab === "Scenes"}
           <div class="tab-panel-container">
-            <SceneList />
-            <NewSceneField />
+            <ScenesPanel />
           </div>
-        {:else if $selectedTab === "Project"}
+        {:else}
           <div class="tab-panel-container">
             <ProjectDetails />
           </div>
-        {:else if !Platform.isMobile}
-          <div class="tab-panel-container disconnected">
-            <CompileView />
-          </div>
         {/if}
-      </div>
-    {:else}
-      <div>
-        <div class="tabs">
-          <div class="tab-list">
-            <Tab tab="Project" />
-            {#if !Platform.isMobile}
-              <Tab tab="Compile" />
-            {/if}
-          </div>
+      {:else}
+        <div class="tab-panel-container">
+          <ProjectDetails />
         </div>
-        {#if $selectedTab === "Project"}
-          <div class="tab-panel-container">
-            <ProjectDetails />
-          </div>
-        {:else if !Platform.isMobile}
-          <div class="tab-panel-container">
-            <CompileView />
-          </div>
-        {/if}
-      </div>
+      {/if}
     {/if}
   </div>
 {/if}
 
 <style>
+  /* Fixed-height flex column: the picker / toolbar / tabs stay pinned while
+     only the panel below them (the scene list, etc.) scrolls. */
   .inkwell-explorer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     font-size: var(--inkwell-explorer-font-size);
   }
 
+  .tabs {
+    flex-shrink: 0;
+  }
+
   .tab-list {
+    display: flex;
     margin: 0;
-    font-size: 0; /* To remove spacing between tabs */
+    border-bottom: var(--border-width) solid var(--background-modifier-border);
   }
 
+  /* Match the surrounding chrome (and, in a sidebar, the ambient) so the scroll
+     area reads as one uniform surface top-to-bottom — no darker "well" whose
+     empty bottom looks unbounded. Cards provide the contrast instead. */
   .tab-panel-container {
-    background: var(--background-primary);
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    background: var(--background-secondary);
     padding: var(--size-4-1) var(--size-4-2);
-  }
-
-  .tab-panel-container.disconnected {
-    background: none;
-    padding: 0;
   }
 
   .inkwell-sync-wait {

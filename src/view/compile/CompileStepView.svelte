@@ -1,265 +1,168 @@
 <script lang="ts">
   import {
     type CompileStep,
-    CompileStepKind,
+    type CompileStepKind,
     CompileStepOptionType,
     explainStepKind,
     formatStepKind,
     PLACEHOLDER_MISSING_STEP,
   } from "src/compile/steps/abstract-compile-step";
-  import Icon from "../components/Icon.svelte";
 
   const {
     step,
-    ordinal,
     calculatedKind,
+    kindClassName,
     error,
-    onremoveStep,
   }: {
     step: CompileStep;
-    ordinal: number;
     calculatedKind: CompileStepKind | null;
+    kindClassName: string;
     error: string | null;
-    onremoveStep?: () => void;
   } = $props();
-
-  function removeStep() {
-    onremoveStep?.();
-  }
 </script>
 
-<div class="inkwell-compile-step">
-  {#if step.description.canonicalID === PLACEHOLDER_MISSING_STEP.description.canonicalID}
-    <div class="inkwell-compile-step-title-outer">
-      <div class="inkwell-compile-step-title-container">
-        <h4>Invalid Step</h4>
-      </div>
-      <button class="inkwell-remove-step-button" onclick={removeStep} aria-label="Remove step">
-        <Icon iconName="x" />
-      </button>
-    </div>
-    <div class="inkwell-compile-step-error-container">
-      <p class="inkwell-compile-step-error">
-        This workflow contains a step that could not be loaded. Please delete
-        the step to be able to run this workflow. If you're on mobile, this may
-        be a user script step that did not load.
-      </p>
-    </div>
-  {:else}
-    <div class="inkwell-compile-step-title-outer">
-      <div class="inkwell-compile-step-title-container">
-        <h4><span class="inkwell-compile-step-number">{ordinal}</span>{step.description.name}</h4>
-        {#if calculatedKind !== null}
-          <div
-            class="inkwell-step-kind-pill"
-            title={explainStepKind(calculatedKind)}
-          >
-            {formatStepKind(calculatedKind)}
-          </div>
-        {/if}
-      </div>
-      <button class="inkwell-remove-step-button" onclick={removeStep} aria-label="Remove step">
-        <Icon iconName="x" />
-      </button>
-    </div>
-    <p class="inkwell-compile-step-description">
-      {step.description.description}
+{#if step.description.canonicalID === PLACEHOLDER_MISSING_STEP.description.canonicalID}
+  <div class="inkwell-config">
+    <h2 class="inkwell-config-title">Invalid step</h2>
+    <p class="inkwell-config-error">
+      This workflow contains a step that could not be loaded. Please remove it to
+      run this workflow. On mobile, this may be a user-script step that did not
+      load.
     </p>
+  </div>
+{:else}
+  <div class="inkwell-config">
+    <div class="inkwell-config-head">
+      <h2 class="inkwell-config-title">{step.description.name}</h2>
+      {#if calculatedKind !== null}
+        <span class="inkwell-kind-pill {kindClassName}" title={explainStepKind(calculatedKind)}
+          >{formatStepKind(calculatedKind)}</span
+        >
+      {/if}
+    </div>
+    <p class="inkwell-config-desc">{step.description.description}</p>
+
     {#if step.description.options.length > 0}
-      <div class="inkwell-compile-step-options">
-        <div>
-          {#each step.description.options as option}
-            <div class="inkwell-compile-step-option">
-              {#if option.type === CompileStepOptionType.Text}
-                <label for={step.id + "-" + option.id}>{option.name}</label>
+      <div class="inkwell-config-options">
+        {#each step.description.options as option}
+          <div class="inkwell-config-option">
+            {#if option.type === CompileStepOptionType.Text}
+              <label for={step.id + "-" + option.id}>{option.name}</label>
+              <input
+                id={step.id + "-" + option.id}
+                type="text"
+                placeholder={String(option.default).replace(/\n/gu, "\\n")}
+                bind:value={step.optionValues[option.id]}
+              />
+            {:else if option.type === CompileStepOptionType.MultilineText}
+              <label for={step.id + "-" + option.id}>{option.name}</label>
+              <textarea
+                id={step.id + "-" + option.id}
+                placeholder="key: value"
+                bind:value={step.optionValues[option.id]}
+              ></textarea>
+            {:else}
+              <div class="inkwell-config-checkbox">
                 <input
                   id={step.id + "-" + option.id}
-                  type="text"
-                  placeholder={String(option.default).replace(/\n/gu, "\\n")}
-                  bind:value={step.optionValues[option.id]}
+                  type="checkbox"
+                  bind:checked={
+                    () => Boolean(step.optionValues[option.id]),
+                    (v) => (step.optionValues[option.id] = v)
+                  }
                 />
-              {:else if option.type === CompileStepOptionType.MultilineText}
                 <label for={step.id + "-" + option.id}>{option.name}</label>
-                <textarea
-                  id={step.id + "-" + option.id}
-                  placeholder="key: value"
-                  bind:value={step.optionValues[option.id]}
-                ></textarea>
-              {:else}
-                <div class="inkwell-compile-step-checkbox-container">
-                  <input
-                    id={step.id + "-" + option.id}
-                    type="checkbox"
-                    bind:checked={
-                      () => Boolean(step.optionValues[option.id]),
-                      (v) => (step.optionValues[option.id] = v)
-                    }
-                  />
-                  <label for={step.id + "-" + option.id}>{option.name}</label>
-                </div>
-              {/if}
-              <p class="inkwell-compile-step-option-description">
-                {option.description}
-              </p>
-            </div>
-          {/each}
-        </div>
+              </div>
+            {/if}
+            <p class="inkwell-config-option-desc">{option.description}</p>
+          </div>
+        {/each}
       </div>
+    {:else}
+      <p class="inkwell-config-desc">This step has no options.</p>
     {/if}
+
     {#if error}
-      <div class="inkwell-compile-step-error-container">
-        <p class="inkwell-compile-step-error">{error}</p>
-      </div>
+      <p class="inkwell-config-error">{error}</p>
     {/if}
-  {/if}
-</div>
+  </div>
+{/if}
 
 <style>
-  .inkwell-compile-step {
-    background-color: var(--background-modifier-border);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: var(--radius-s);
-    padding: 0;
-    margin: var(--size-4-4) 0;
+  .inkwell-config {
+    display: flex;
+    flex-direction: column;
   }
 
-  .inkwell-compile-step-title-outer {
+  .inkwell-config-head {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
     align-items: center;
-    padding: var(--size-4-1) var(--size-4-1) var(--size-4-1) var(--size-4-2);
+    gap: var(--size-4-2);
   }
 
-  .inkwell-compile-step-title-container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
+  .inkwell-config-title {
+    margin: 0;
+    font-size: var(--font-ui-large);
+    font-weight: 600;
+    color: var(--text-normal);
+  }
+
+  .inkwell-config-desc {
+    margin: var(--size-4-1) 0 0;
+    color: var(--text-muted);
     font-size: var(--font-ui-smaller);
   }
 
-  .inkwell-compile-step-title-container h4 {
-    display: inline-block;
-    margin: var(--size-4-1) var(--size-4-2) var(--size-4-1) 0;
-    padding: 0;
-    font-size: inherit;
-    font-weight: 600;
-  }
-
-  .inkwell-compile-step-title-container .inkwell-step-kind-pill {
+  .inkwell-config-options {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: color-mix(in srgb, var(--text-accent) 50%, var(--background-modifier-border) 50%);
-    color: var(--text-on-accent);
-    border-radius: var(--radius-l);
-    font-size: var(--font-smallest);
-    font-weight: bold;
-    padding: var(--size-4-1) var(--size-4-2);
-    margin-right: var(--size-4-1);
-    height: var(--h1-line-height);
+    flex-direction: column;
+    gap: var(--size-4-4);
+    margin-top: var(--size-4-4);
+    padding-top: var(--size-4-3);
+    border-top: var(--border-width) solid var(--background-modifier-border);
   }
 
-  .inkwell-compile-step-number {
-    color: var(--text-faint);
-    display: inline-block;
-    width: var(--size-4-6);
-    text-align: center;
-  }
-
-  .inkwell-remove-step-button {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--size-4-6);
-    height: var(--size-4-6);
-    padding: 0;
-    margin: 0 var(--size-4-1) 0 0;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    color: var(--text-faint);
-    border-radius: var(--radius-s);
-    cursor: pointer;
-  }
-
-  .inkwell-remove-step-button:hover {
-    color: var(--text-error);
-    background: transparent;
-  }
-
-  .inkwell-compile-step p {
-    margin: 0;
-    background: var(--background-primary);
-  }
-
-  .inkwell-compile-step-description {
-    font-size: var(--font-smallest);
-    color: var(--text-muted);
-    padding: var(--size-4-2) var(--size-4-2) var(--size-4-2) calc(var(--size-4-2) + var(--size-4-6));
-  }
-
-  .inkwell-compile-step-options {
-    padding: var(--size-4-2) 0;
-    background: var(--background-primary);
-  }
-
-  .inkwell-compile-step-options > div {
-    margin: 0 var(--size-4-2) 0 calc(var(--size-4-2) + var(--size-4-6));
-  }
-
-  .inkwell-compile-step-option {
-    margin: 0 var(--size-4-4) var(--size-4-4) 0;
-  }
-
-  .inkwell-compile-step-option label {
+  .inkwell-config-option label {
     display: block;
     font-weight: 600;
-    font-size: var(--font-smallest);
+    font-size: var(--font-ui-smaller);
+    margin-bottom: var(--size-2-2);
   }
 
-  .inkwell-compile-step-checkbox-container {
+  .inkwell-config-option input[type="text"],
+  .inkwell-config-option textarea {
+    width: 100%;
+    font-family: var(--font-monospace);
+  }
+
+  .inkwell-config-option textarea {
+    resize: vertical;
+    min-height: var(--size-4-16);
+  }
+
+  .inkwell-config-checkbox {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
+    gap: var(--size-4-2);
   }
 
-  .inkwell-compile-step-option input[type="text"] {
-    margin: 0 0 var(--size-4-1) 0;
-    width: 100%;
+  .inkwell-config-checkbox label {
+    margin-bottom: 0;
   }
 
-  .inkwell-compile-step-option textarea {
-    color: var(--text-accent);
-    margin: 0 0 var(--size-4-1) 0;
-    width: 100%;
-    resize: vertical;
-  }
-
-  .inkwell-compile-step-option input[type="checkbox"] {
-    margin: 0 var(--size-4-2) var(--size-2-1) 0;
-  }
-
-  .inkwell-compile-step-option input:focus {
-    color: var(--text-accent-hover);
-  }
-
-  .inkwell-compile-step-option-description {
-    font-size: var(--font-smallest);
-    line-height: 1em;
+  .inkwell-config-option-desc {
+    margin: var(--size-4-1) 0 0;
+    font-size: var(--font-ui-smaller);
     color: var(--text-faint);
   }
 
-  .inkwell-compile-step-error-container {
-    margin-top: var(--size-4-2);
-  }
-
-  .inkwell-compile-step-error {
+  .inkwell-config-error {
+    margin-top: var(--size-4-3);
+    padding: var(--size-4-2) var(--size-4-3);
+    background-color: color-mix(in srgb, var(--text-error) 12%, transparent);
+    border-radius: var(--radius-s);
     color: var(--text-error);
-    font-size: var(--font-smallest);
-    line-height: 1em;
+    font-size: var(--font-ui-smaller);
   }
 </style>

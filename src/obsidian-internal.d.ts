@@ -9,6 +9,9 @@ import { type TAbstractFile, type TFile, type TFolder } from "obsidian";
 
 declare module "obsidian" {
   interface App {
+    commands: {
+      executeCommandById: (id: string) => boolean;
+    };
     plugins: {
       getPlugin: ((id: "templater-obsidian") => TemplaterPlugin | null) &
         ((id: string) => unknown | null);

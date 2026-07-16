@@ -1,6 +1,83 @@
 :root {
   --inkwell-explorer-font-size: var(--font-ui-medium);
   --inkwell-explorer-indent-size: 2em;
+
+  /* Scene status colors, keyed to each scene's front-matter `status:`. A fixed
+     semantic vocabulary (draft = amber, revising = blue, complete = green,
+     scrap = red) — deliberately literal rather than themed, and readable on
+     both light and dark. Declared under :root so a user snippet can override
+     any of them. (Obsidian's own --color-* live on `body`, so they can't be
+     referenced from here.) See the [data-scene-status] rules below. */
+  --inkwell-status-draft: #e0a52b;
+  --inkwell-status-revising: #5b9bf5;
+  --inkwell-status-complete: #52c294;
+  --inkwell-status-scrap: #f0616d;
+}
+
+/* Scene status bullet. The element is rendered wherever a scene is listed
+   (List / Cards / Outline); color is driven by the nearest [data-scene-status]
+   ancestor. Matching is case-insensitive; an unknown or absent status keeps the
+   neutral fallback. */
+.inkwell-scene-status {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--text-faint);
+}
+
+[data-scene-status="draft" i] .inkwell-scene-status {
+  background-color: var(--inkwell-status-draft);
+}
+
+[data-scene-status="revising" i] .inkwell-scene-status {
+  background-color: var(--inkwell-status-revising);
+}
+
+[data-scene-status="complete" i] .inkwell-scene-status {
+  background-color: var(--inkwell-status-complete);
+}
+
+[data-scene-status="scrap" i] .inkwell-scene-status {
+  background-color: var(--inkwell-status-scrap);
+}
+
+/* Compile step-kind pills (Scene / Join / Manuscript) — distinct semantic
+   colors so a step's type is scannable at a glance. Under :root so a user
+   snippet can override them; used by the Compile builder's step list and the
+   selected-step config header. */
+:root {
+  --inkwell-kind-scene: #6ea8fe;
+  --inkwell-kind-join: #e0a52b;
+  --inkwell-kind-manuscript: #52c294;
+}
+
+.inkwell-kind-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-s);
+  padding: 0 var(--size-4-1);
+  font-size: var(--font-smallest);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+}
+
+.inkwell-kind-pill.kind-scene {
+  color: var(--inkwell-kind-scene);
+  background-color: color-mix(in srgb, var(--inkwell-kind-scene) 16%, transparent);
+}
+
+.inkwell-kind-pill.kind-join {
+  color: var(--inkwell-kind-join);
+  background-color: color-mix(in srgb, var(--inkwell-kind-join) 16%, transparent);
+}
+
+.inkwell-kind-pill.kind-manuscript {
+  color: var(--inkwell-kind-manuscript);
+  background-color: color-mix(in srgb, var(--inkwell-kind-manuscript) 16%, transparent);
 }
 
 /* Ensure the add-step modal frame never scrolls — only .modal-content does.
@@ -22,6 +99,42 @@
   overflow-y: auto;
   flex: 1;
   min-height: 0;
+}
+
+/* Give the scene panel a subtle, always-visible custom scrollbar. Rendering a
+   custom bar (at the probed native width, so switching native → custom causes
+   no reflow) lets us tone the thumb down to Obsidian's faint thumb color, inset
+   into a thin pill. No hover/hide behavior — always shown, just quiet. Gated on
+   `.inkwell-classic-scrollbars` — set by the plugin only when the environment
+   uses space-taking classic scrollbars — so users on native overlay scrollbars
+   aren't switched to a classic bar. */
+body.inkwell-classic-scrollbars .inkwell-explorer .tab-panel-container::-webkit-scrollbar {
+  width: var(--inkwell-scrollbar-width, 12px);
+}
+
+body.inkwell-classic-scrollbars .inkwell-explorer .tab-panel-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+body.inkwell-classic-scrollbars .inkwell-explorer .tab-panel-container::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+body.inkwell-classic-scrollbars .inkwell-explorer .tab-panel-container::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb-bg, rgba(255, 255, 255, 0.1));
+  border: var(--size-2-2) solid transparent;
+  background-clip: padding-box;
+  border-radius: var(--radius-l);
+}
+
+.modal.inkwell-new-project-modal {
+  width: min(600px, 90vw);
+}
+
+.modal.inkwell-ebook-modal {
+  width: min(680px, 92vw);
 }
 
 .inkwell-settings-user-steps {

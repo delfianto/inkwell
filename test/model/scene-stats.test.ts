@@ -4,7 +4,7 @@ import {
   type ProjectWordCounts,
   type SingleSceneProject,
 } from "src/model/types";
-import { statsForScene } from "src/model/scene-stats";
+import { sceneWordCount, statsForScene } from "src/model/scene-stats";
 
 const fakeFile = (path: string) => ({ path }) as never;
 
@@ -69,5 +69,29 @@ describe("statsForScene", () => {
     // file is in the project's folder but doesn't match any scene name in counts
     const result = statsForScene(fakeFile("Novel/Untitled.md"), multi, counts);
     expect(result).toEqual({ scene: 0, project: 1200 });
+  });
+});
+
+describe("sceneWordCount", () => {
+  const counts: ProjectWordCounts = {
+    "Novel/Index.md": { "Chapter 1": 500, "Chapter 2": 700 },
+    "Story.md": 1234,
+  };
+
+  it("returns the per-scene count for a named scene", () => {
+    expect(sceneWordCount(counts, multi, "Chapter 1")).toBe(500);
+    expect(sceneWordCount(counts, multi, "Chapter 2")).toBe(700);
+  });
+
+  it("returns undefined for a scene absent from the counts map", () => {
+    expect(sceneWordCount(counts, multi, "Chapter 3")).toBeUndefined();
+  });
+
+  it("returns undefined when the project has no counts entry yet", () => {
+    expect(sceneWordCount({}, multi, "Chapter 1")).toBeUndefined();
+  });
+
+  it("returns undefined for a single-scene project (no per-scene map)", () => {
+    expect(sceneWordCount(counts, single, "Story")).toBeUndefined();
   });
 });
