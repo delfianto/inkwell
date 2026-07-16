@@ -112,6 +112,6 @@ The redesign is a re-skin and re-layout, not a rewrite of the engine. Unchanged:
 ## How the screenshots are captured
 
 Both the before and after shots were taken from the plugin running live in Obsidian,
-driven over the Chrome DevTools Protocol against `test-inkwell-vault`. See
+driven over the Chrome DevTools Protocol against `test-vault-inkwell`. See
 [the audit's repro note](ui-audit/README.md#how-these-were-captured-repro) for the
 mechanics.

@@ -113,5 +113,5 @@
       }
     }
   ],
-  "ignorePatterns": ["dist", "coverage", "node_modules", "test-inkwell-vault", "*.md"]
+  "ignorePatterns": ["dist", "coverage", "node_modules", "test-vault-inkwell", "*.md"]
 }

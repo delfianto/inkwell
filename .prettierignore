@@ -13,7 +13,7 @@ coverage
 *.md
 
 # Test vault (frontmatter and content managed by the plugin at runtime)
-test-inkwell-vault
+test-vault-inkwell
 
 # Local agent state
 .claude

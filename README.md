@@ -140,7 +140,7 @@ Type-checking stays on the TypeScript **6.x** line: TypeScript 7 is the Go rewri
 
 ```sh
 bun install          # one-time
-bun run dev          # watch build into test-inkwell-vault/.obsidian/plugins/inkwell
+bun run dev          # watch build into test-vault-inkwell/.obsidian/plugins/inkwell
 bun run build        # production build → ./dist (main.js, styles.css, manifest.json)
 bun run test         # vp test run (vitest)
 bun run type-check   # tsc + svelte-check

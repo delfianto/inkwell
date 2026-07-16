@@ -18,10 +18,20 @@ data.json
 # macos
 *.DS_Store
 
-# test vault
-test-inkwell-vault/.obsidian/workspace
-test-inkwell-vault/.obsidian/plugins/inkwell/*.css
-test-inkwell-vault/.obsidian/plugins/inkwell/*.js
-test-inkwell-vault/.obsidian/plugins/inkwell/*.json
-/test-inkwell-vault/.obsidian/workspace.json
-/test-inkwell-vault/inkwell-sessions.json
+# test vault — built plugin output
+test-vault-inkwell/.obsidian/plugins/inkwell/*.css
+test-vault-inkwell/.obsidian/plugins/inkwell/*.js
+test-vault-inkwell/.obsidian/plugins/inkwell/*.json
+
+# test vault — Obsidian runtime state (rewritten as the app is used)
+test-vault-inkwell/.obsidian/workspace.json
+test-vault-inkwell/.obsidian/workspace-mobile.json
+test-vault-inkwell/.obsidian/appearance.json
+test-vault-inkwell/.obsidian/core-plugins.json
+test-vault-inkwell/.obsidian/core-plugins-migration.json
+test-vault-inkwell/.obsidian/community-plugins.json
+test-vault-inkwell/.obsidian/graph.json
+
+# test vault — Inkwell runtime data (workflows + user scripts) and sessions
+test-vault-inkwell/.obsidian/inkwell/
+test-vault-inkwell/inkwell-sessions.json
