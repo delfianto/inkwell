@@ -63,6 +63,10 @@
   min-height: 0;
 }
 
+.modal.inkwell-new-project-modal {
+  width: min(600px, 90vw);
+}
+
 .inkwell-settings-user-steps {
   padding-inline-start: 1em;
   margin-block-start: 0;

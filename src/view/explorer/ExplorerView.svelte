@@ -35,8 +35,9 @@
 {:else}
   <div class="inkwell-explorer">
     <ProjectPicker />
-    {#if $selectedProject && $selectedProject.format === "scenes"}
-      <div>
+    {#if $selectedProject}
+      {#if $selectedProject.format === "scenes"}
+        <div>
         <div class="tabs">
           <div class="tab-list">
             <Tab tab="Scenes" />
@@ -80,6 +81,7 @@
           </div>
         {/if}
       </div>
+      {/if}
     {/if}
   </div>
 {/if}
