@@ -87,7 +87,7 @@
   "overrides": [
     {
       // Build/test tooling runs under Node — builtins are the point.
-      "files": ["*.config.mts", "*.config.ts", "*.config.js"],
+      "files": ["*.config.mts", "*.config.ts", "*.config.js", "scripts/**"],
       "rules": {
         "import/no-nodejs-modules": "off"
       }
