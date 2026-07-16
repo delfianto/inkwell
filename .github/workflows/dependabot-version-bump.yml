@@ -1,0 +1,43 @@
+name: Dependabot version bump
+
+# When a Dependabot PR against bun.lock/package.json merges (auto-merged
+# minor/patch, or a major a human approved), bump the plugin's patch version
+# and push to main. release.yml then picks up the new manifest.json version
+# and cuts a release automatically. github-actions-ecosystem PRs are skipped
+# since they don't change what ships in dist/.
+on:
+  pull_request:
+    types: [closed]
+    branches: ["main"]
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    if: github.event.pull_request.merged == true && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump manifest.json + versions.json
+        if: steps.metadata.outputs.package-ecosystem == 'bun'
+        run: node scripts/bump-version.mjs
+
+      - name: Commit and push
+        if: steps.metadata.outputs.package-ecosystem == 'bun'
+        run: |
+          version=$(jq -r .version manifest.json)
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json manifest.json versions.json
+          git commit -m "chore: bump version to $version (dependency update)"
+          git push origin main
