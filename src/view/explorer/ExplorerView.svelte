@@ -47,16 +47,11 @@
 
 <style>
   /* Fixed-height flex column: the picker / toolbar / tabs stay pinned while
-     only the panel below them (the scene list, etc.) scrolls. One uniform
-     surface color across the whole view (not just the scroll panel) so the
-     chrome, the scroll area, and the empty space below the content all read as
-     a single container regardless of whether the view is docked in a sidebar
-     (--background-secondary ambient) or the main area. */
+     only the panel below them (the scene list, etc.) scrolls. */
   .inkwell-explorer {
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: var(--background-primary);
     font-size: var(--inkwell-explorer-font-size);
   }
 
@@ -70,11 +65,14 @@
     border-bottom: var(--border-width) solid var(--background-modifier-border);
   }
 
+  /* Match the surrounding chrome (and, in a sidebar, the ambient) so the scroll
+     area reads as one uniform surface top-to-bottom — no darker "well" whose
+     empty bottom looks unbounded. Cards provide the contrast instead. */
   .tab-panel-container {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    background: var(--background-primary);
+    background: var(--background-secondary);
     padding: var(--size-4-1) var(--size-4-2);
   }
 
