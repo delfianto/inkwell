@@ -76,11 +76,15 @@ export interface SerializedWorkflow {
  */
 export type ProjectWordCounts = Record<string, Record<string, number> | number>;
 
+/** How the Scenes tab renders its scene list. */
+export type SceneViewMode = "list" | "cards" | "outline";
+
 export interface InkwellPluginSettings {
   version: number;
   selectedProjectPath: string | null;
   workflows: Record<string, SerializedWorkflow> | null;
   numberScenes: boolean;
+  sceneViewMode: SceneViewMode;
   sceneTemplate: string | null;
   waitForSync: boolean;
   fallbackWaitEnabled: boolean;
@@ -92,6 +96,7 @@ export const DEFAULT_SETTINGS: InkwellPluginSettings = {
   selectedProjectPath: null,
   workflows: null,
   numberScenes: false,
+  sceneViewMode: "list",
   sceneTemplate: null,
   waitForSync: false,
   fallbackWaitEnabled: true,
@@ -102,6 +107,7 @@ export const TRACKED_SETTINGS_PATHS: (keyof InkwellPluginSettings)[] = [
   "version",
   "selectedProjectPath",
   "numberScenes",
+  "sceneViewMode",
   "sceneTemplate",
   "waitForSync",
   "fallbackWaitEnabled",
@@ -110,6 +116,7 @@ export const TRACKED_SETTINGS_PATHS: (keyof InkwellPluginSettings)[] = [
 
 export const PASSTHROUGH_SAVE_SETTINGS_PATHS: (keyof InkwellPluginSettings)[] = [
   "numberScenes",
+  "sceneViewMode",
   "sceneTemplate",
   "waitForSync",
   "fallbackWaitEnabled",

@@ -35,24 +35,26 @@
 </script>
 
 <div class="new-scene-container">
-  <input
-    id="new-scene"
-    type="text"
-    placeholder="New Scene"
-    bind:value={newSceneName}
-    bind:this={newSceneInput}
-    onkeydown={(e) => {
-      if (e.key === "Enter") {
-        onNewSceneEnter(!e.shiftKey);
-      } else if (e.key === "Escape") {
-        newSceneName = "";
-        newSceneInput?.blur();
-      }
-    }}
-    class:invalid={!!error}
-  />
+  <div class="new-scene-field" class:invalid={!!error}>
+    <span class="new-scene-plus" aria-hidden="true">＋</span>
+    <input
+      id="new-scene"
+      type="text"
+      placeholder="New scene"
+      bind:value={newSceneName}
+      bind:this={newSceneInput}
+      onkeydown={(e) => {
+        if (e.key === "Enter") {
+          onNewSceneEnter(!e.shiftKey);
+        } else if (e.key === "Escape") {
+          newSceneName = "";
+          newSceneInput?.blur();
+        }
+      }}
+    />
+  </div>
   {#if error}
-    <p>{error}</p>
+    <p class="new-scene-error">{error}</p>
   {/if}
 </div>
 
@@ -62,16 +64,54 @@
     padding: var(--size-4-2) 0;
   }
 
-  #new-scene {
+  .new-scene-field {
+    display: flex;
+    align-items: center;
+    gap: var(--size-4-1);
     width: 100%;
     background: var(--background-modifier-form-field);
     border: var(--input-border-width) solid var(--background-modifier-border);
     border-radius: var(--input-radius);
-    font-size: var(--font-ui-small);
-    padding: var(--size-4-1) var(--size-4-2);
+    padding: 0 var(--size-4-2);
   }
 
-  #new-scene.invalid {
+  .new-scene-field:focus-within {
+    border-color: var(--background-modifier-border-focus);
+    box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+  }
+
+  .new-scene-field.invalid {
+    border-color: var(--text-error);
+  }
+
+  .new-scene-plus {
+    flex-shrink: 0;
+    color: var(--text-accent);
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  #new-scene {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    font-size: var(--font-ui-small);
+    padding: var(--size-4-1) 0;
+  }
+
+  #new-scene:focus {
+    box-shadow: none;
+  }
+
+  .new-scene-field.invalid #new-scene {
     color: var(--text-error);
+  }
+
+  .new-scene-error {
+    color: var(--text-error);
+    font-size: var(--font-ui-smaller);
+    margin: var(--size-4-1) 0 0;
   }
 </style>

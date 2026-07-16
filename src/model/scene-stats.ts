@@ -7,6 +7,24 @@ export interface SceneWordStats {
   project: number;
 }
 
+/**
+ * Word count for a single named scene within a multi-scene project, looked up
+ * from {@link ProjectWordCounts}. Returns `undefined` when the project has no
+ * counts yet, is a single-scene project (no per-scene map), or the scene is
+ * absent from the map. Shared by the List / Cards / Outline scene views.
+ */
+export function sceneWordCount(
+  counts: ProjectWordCounts,
+  project: Project,
+  sceneName: string,
+): number | undefined {
+  const projectCounts = counts[project.vaultPath];
+  if (!projectCounts || typeof projectCounts === "number") {
+    return undefined;
+  }
+  return projectCounts[sceneName];
+}
+
 export function statsForScene(
   activeFile: TFile | null,
   project: Project,
