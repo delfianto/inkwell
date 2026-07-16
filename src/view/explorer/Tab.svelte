@@ -9,44 +9,6 @@
   class:selected={$selectedTab === tab}
   onclick={() => selectedTab.set(tab)}
 >
-  {#if tab == "Scenes"}
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      class="clickable-icon lucide lucide-gallery-horizontal-end"
-      ><path d="M2 7v10" /><path d="M6 5v14" /><rect
-        width="12"
-        height="18"
-        x="10"
-        y="3"
-        rx="2"
-      /></svg
-    >
-  {/if}
-  {#if tab == "Project"}
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      class="clickable-icon lucide lucide-book-text"
-      ><path
-        d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"
-      /><path d="M8 11h8" /><path d="M8 7h6" /></svg
-    >
-  {/if}
   <span class="tab-label">{tab}</span>
 </button>
 
@@ -60,7 +22,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--size-4-1);
     background: none;
     border: none;
     border-bottom: var(--size-2-1) solid transparent;
@@ -73,12 +34,6 @@
     font-weight: var(--tab-font-weight);
     white-space: nowrap;
     cursor: pointer;
-  }
-
-  .tab-button svg {
-    flex-shrink: 0;
-    width: var(--icon-s);
-    height: var(--icon-s);
   }
 
   .tab-label {
