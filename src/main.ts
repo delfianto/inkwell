@@ -16,6 +16,7 @@ import {
   TFolder,
   type WorkspaceLeaf,
 } from "obsidian";
+import { CompilePane, VIEW_TYPE_INKWELL_COMPILE } from "./view/compile/CompilePane";
 import {
   DEFAULT_SETTINGS,
   initialized,
@@ -63,6 +64,7 @@ export default class InkwellPlugin extends Plugin {
     addIcon(ICON_NAME, ICON_SVG);
 
     this.registerView(VIEW_TYPE_INKWELL_EXPLORER, (leaf: WorkspaceLeaf) => new ExplorerPane(leaf));
+    this.registerView(VIEW_TYPE_INKWELL_COMPILE, (leaf: WorkspaceLeaf) => new CompilePane(leaf));
 
     this.registerEvent(
       this.app.workspace.on("file-menu", (menu, file: TAbstractFile) => {
@@ -146,6 +148,7 @@ export default class InkwellPlugin extends Plugin {
     this.unsubscribers.forEach((u) => u());
     this.wordCountTracker.destroy();
     this.app.workspace.getLeavesOfType(VIEW_TYPE_INKWELL_EXPLORER).forEach((leaf) => leaf.detach());
+    this.app.workspace.getLeavesOfType(VIEW_TYPE_INKWELL_COMPILE).forEach((leaf) => leaf.detach());
   }
 
   async loadSettings(): Promise<void> {
