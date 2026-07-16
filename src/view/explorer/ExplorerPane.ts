@@ -19,6 +19,7 @@ import {
 } from "obsidian";
 import { mount, unmount } from "svelte";
 import AddStepModal from "../modals/AddStepModal";
+import EbookModal from "../modals/EbookModal";
 import ExplorerView from "./ExplorerView.svelte";
 import { get } from "svelte/store";
 
@@ -192,6 +193,7 @@ export class ExplorerPane extends ItemView {
     );
 
     context.set("openCompileStepMenu", () => new AddStepModal(this.app).open());
+    context.set("openEbookModal", () => new EbookModal(this.app).open());
     context.set(
       "showCompileActionsMenu",
       (
