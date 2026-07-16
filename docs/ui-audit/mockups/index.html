@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inkwell — redesign mockups</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; background:#161616; color:#dcdcdc;
+         font-family:Inter,-apple-system,'Segoe UI',sans-serif; }
+  header { padding:32px 40px 8px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  header p { color:#8a8a8a; font-size:13px; margin:0; max-width:70ch; }
+  section { padding:24px 40px 8px; }
+  h2 { font-size:15px; margin:0 0 2px; }
+  .why { color:#9b8cf0; font-size:12.5px; margin:0 0 14px; }
+  .frame { background:#1e1e1e; border:1px solid #2e2e2e; border-radius:12px;
+           padding:10px; display:inline-block; max-width:100%; }
+  img { display:block; width:100%; height:auto; max-width:1120px; border-radius:6px; }
+  footer { padding:24px 40px 48px; color:#6b6b6b; font-size:12px; }
+  a { color:#a78bfa; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Inkwell — sidebar & workflow redesign · round 1</h1>
+  <p>To-scale mockups in Obsidian's dark palette. Directions chosen: full-pane compile builder ·
+     Scenes List + Outline · eBook metadata in its own modal. These are wireframes to react to, not final visuals.</p>
+</header>
+
+<section>
+  <h2>1 · Scenes — refined List (default) + Card view (wide, grouped by depth)</h2>
+  <p class="why">Per-row word count + colour-coded status (draft/revising/complete/scrap). The wide Card view groups scenes under collapsible Act headers (from Index.md depth, two levels) and fills the space.</p>
+  <div class="frame"><img src="01-scenes.svg" alt="Scenes mockup"></div>
+</section>
+
+<section>
+  <h2>2 · Project tab (lean) + eBook metadata modal</h2>
+  <p class="why">Splits "glance" from "edit": the tab shows an overview stat and the essentials; the 11-field eBook form moves to a roomy, grouped two-column modal. Help hides behind ⓘ.</p>
+  <div class="frame"><img src="02-project-and-ebook.svg" alt="Project and eBook mockup"></div>
+</section>
+
+<section>
+  <h2>3 · Compile — full-pane workflow builder</h2>
+  <p class="why">Your #1 pain. Steps collapse to one line (no endless scroll); only the selected step's options show on the right; color-coded kinds; live preview; Run always visible.</p>
+  <div class="frame"><img src="03-compile-fullpane.svg" alt="Compile mockup"></div>
+</section>
+
+<section>
+  <h2>4 · New Project modal (action-first) + empty state</h2>
+  <p class="why">Type + title lead; the explanations shrink into selectable type cards; live path; Create always visible (disabled until named). The no-projects empty state gets an icon, one sentence, and a real CTA instead of a paragraph.</p>
+  <div class="frame"><img src="04-new-project-and-empty.svg" alt="New Project modal and empty state mockup"></div>
+</section>
+
+<footer>
+  Before/after: the original screenshots live in <a href="../screens/">../screens</a>.
+  Full written audit in <a href="../README.md">../README.md</a>.
+</footer>
+</body>
+</html>
