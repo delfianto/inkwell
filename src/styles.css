@@ -104,14 +104,17 @@
 /* Auto-hide the scene panel's scroll thumb: transparent when idle, revealed on
    hover (or while focused within). The track keeps its reserved width, so
    content never reflows — the hide/show is purely the thumb's color, no jank.
-   Gated on `body.styled-scrollbars` (Obsidian's own condition) so users who
-   opt into native overlay scrollbars keep those untouched. */
-body.styled-scrollbars .inkwell-explorer .tab-panel-container::-webkit-scrollbar-thumb {
+   Gated on `.inkwell-classic-scrollbars` (set by the plugin only when the
+   environment uses space-taking classic scrollbars) so users on native overlay
+   scrollbars — which already auto-hide — aren't switched to a classic bar. */
+body.inkwell-classic-scrollbars .inkwell-explorer .tab-panel-container::-webkit-scrollbar-thumb {
   background-color: transparent;
 }
 
-body.styled-scrollbars .inkwell-explorer .tab-panel-container:hover::-webkit-scrollbar-thumb,
-body.styled-scrollbars
+body.inkwell-classic-scrollbars
+  .inkwell-explorer
+  .tab-panel-container:hover::-webkit-scrollbar-thumb,
+body.inkwell-classic-scrollbars
   .inkwell-explorer
   .tab-panel-container:focus-within::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar-thumb-bg);
