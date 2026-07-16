@@ -47,11 +47,16 @@
 
 <style>
   /* Fixed-height flex column: the picker / toolbar / tabs stay pinned while
-     only the panel below them (the scene list, etc.) scrolls. */
+     only the panel below them (the scene list, etc.) scrolls. One uniform
+     surface color across the whole view (not just the scroll panel) so the
+     chrome, the scroll area, and the empty space below the content all read as
+     a single container regardless of whether the view is docked in a sidebar
+     (--background-secondary ambient) or the main area. */
   .inkwell-explorer {
     display: flex;
     flex-direction: column;
     height: 100%;
+    background: var(--background-primary);
     font-size: var(--inkwell-explorer-font-size);
   }
 
