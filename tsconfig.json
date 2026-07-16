@@ -19,5 +19,5 @@
     "sourceMap": true
   },
   "include": ["src/**/*.ts", "src/**/*.svelte", "test/**/*.ts"],
-  "exclude": ["node_modules", "test-inkwell-vault", "dist"]
+  "exclude": ["node_modules", "test-vault-inkwell", "dist"]
 }

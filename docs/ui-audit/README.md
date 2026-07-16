@@ -1,6 +1,6 @@
 # Inkwell — Design & Usability Audit
 
-Captured live from the plugin running in Obsidian 1.12.7 (dark theme, `test-inkwell-vault`), driven over the Chrome DevTools Protocol. Screenshots are in [`./screens`](./screens). The evaluation uses standard heuristics — Nielsen's 10, Norman's affordances/signifiers, Gestalt grouping, typographic hierarchy, Fitts's law, progressive disclosure, and WCAG contrast — plus Obsidian's own design conventions (a good plugin should feel *native but intentional*).
+Captured live from the plugin running in Obsidian 1.12.7 (dark theme, `test-vault-inkwell`), driven over the Chrome DevTools Protocol. Screenshots are in [`./screens`](./screens). The evaluation uses standard heuristics — Nielsen's 10, Norman's affordances/signifiers, Gestalt grouping, typographic hierarchy, Fitts's law, progressive disclosure, and WCAG contrast — plus Obsidian's own design conventions (a good plugin should feel *native but intentional*).
 
 > The two active vault CSS snippets are trivial (explorer font bumped to 16 px; a 🎉 prepended to `status: done` scenes) and don't change the structure. Findings are about Inkwell's own UI.
 
@@ -121,4 +121,4 @@ Uses Obsidian's native `Setting` API, so it's the most consistent surface. Nits:
 ---
 
 ## How these were captured (repro)
-Obsidian was launched with `--remote-debugging-port=9222` on `test-inkwell-vault`; a small Node CDP driver (`fetch` + `WebSocket`, no deps) selected the project/tab via the DOM and captured element-clipped PNGs at 2×. The global `obsidian.json` and the `numberScenes` setting were changed only transiently and restored afterward.
+Obsidian was launched with `--remote-debugging-port=9222` on `test-vault-inkwell`; a small Node CDP driver (`fetch` + `WebSocket`, no deps) selected the project/tab via the DOM and captured element-clipped PNGs at 2×. The global `obsidian.json` and the `numberScenes` setting were changed only transiently and restored afterward.

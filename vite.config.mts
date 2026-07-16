@@ -17,7 +17,7 @@ function devOutDir(): string {
   if (pluginsDir) {
     return path.join(pluginsDir, "inkwell");
   }
-  return "test-inkwell-vault/.obsidian/plugins/inkwell";
+  return "test-vault-inkwell/.obsidian/plugins/inkwell";
 }
 
 const outDir = isWatch ? devOutDir() : "dist";
