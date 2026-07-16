@@ -151,6 +151,7 @@ export default class InkwellPlugin extends Plugin {
     this.app.workspace.getLeavesOfType(VIEW_TYPE_INKWELL_EXPLORER).forEach((leaf) => leaf.detach());
     this.app.workspace.getLeavesOfType(VIEW_TYPE_INKWELL_COMPILE).forEach((leaf) => leaf.detach());
     document.body.classList.remove("inkwell-classic-scrollbars");
+    document.body.style.removeProperty("--inkwell-scrollbar-width");
   }
 
   /**
@@ -163,9 +164,16 @@ export default class InkwellPlugin extends Plugin {
     const probe = document.createElement("div");
     probe.style.cssText = "position:absolute;top:-9999px;width:50px;height:50px;overflow:scroll;";
     document.body.append(probe);
-    const classic = probe.offsetWidth - probe.clientWidth > 0;
+    const width = probe.offsetWidth - probe.clientWidth;
     probe.remove();
+    const classic = width > 0;
     document.body.classList.toggle("inkwell-classic-scrollbars", classic);
+    if (classic) {
+      // Match the custom scrollbar to the native width so there's no reflow.
+      document.body.style.setProperty("--inkwell-scrollbar-width", `${width}px`);
+    } else {
+      document.body.style.removeProperty("--inkwell-scrollbar-width");
+    }
   }
 
   async loadSettings(): Promise<void> {
