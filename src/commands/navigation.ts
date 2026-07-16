@@ -1,4 +1,4 @@
-import { activeFile, selectedTab } from "src/view/stores";
+import { activeFile, newSceneFieldVisible, selectedTab } from "src/view/stores";
 import { type App, type PaneType } from "obsidian";
 import {
   findScene,
@@ -202,6 +202,7 @@ export const focusNewSceneField: CommandBuilder = (plugin) => ({
 
     showLeaf(plugin);
     selectedTab.set("Scenes");
+    newSceneFieldVisible.set(true);
     setTimeout(() => {
       activeDocument.querySelector<HTMLElement>("#new-scene")?.focus();
     }, 0);

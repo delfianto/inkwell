@@ -7,7 +7,7 @@ import { type TFile } from "obsidian";
 // Writable stores
 export const activeFile = writable<TFile | null>(null);
 
-export type ExplorerTab = "Scenes" | "Project" | "Compile";
+export type ExplorerTab = "Scenes" | "Project";
 export const selectedTab = writable<ExplorerTab>("Project");
 
 /**
@@ -16,6 +16,12 @@ export const selectedTab = writable<ExplorerTab>("Project");
  * (initialized on load and written back on change from the plugin entry).
  */
 export const sceneViewMode = writable<SceneViewMode>("list");
+
+/**
+ * Whether the transient "New scene" input is showing. Toggled from the project
+ * toolbar's ＋ action; the input hides itself on Escape or an empty blur.
+ */
+export const newSceneFieldVisible = writable<boolean>(false);
 
 const statsFor = (
   file: TFile | null,

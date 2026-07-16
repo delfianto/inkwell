@@ -1,28 +1,11 @@
 <script lang="ts">
   import { selectedProject, waitingForSync } from "src/model/stores";
-  import CompileLauncher from "./CompileLauncher.svelte";
-  import { Platform } from "obsidian";
   import ProjectDetails from "./ProjectDetails.svelte";
   import ProjectPicker from "./ProjectPicker.svelte";
+  import ProjectToolbar from "./ProjectToolbar.svelte";
   import ScenesPanel from "./ScenesPanel.svelte";
   import { selectedTab } from "../stores";
   import Tab from "./Tab.svelte";
-
-  $effect(() => {
-    if (
-      $selectedProject &&
-      $selectedProject.format === "single" &&
-      $selectedTab === "Scenes"
-    ) {
-      $selectedTab = "Project";
-    }
-  });
-
-  $effect(() => {
-    if (Platform.isMobile && $selectedTab === "Compile") {
-      $selectedTab = "Project";
-    }
-  });
 </script>
 
 {#if $waitingForSync}
@@ -36,51 +19,27 @@
   <div class="inkwell-explorer">
     <ProjectPicker />
     {#if $selectedProject}
+      <ProjectToolbar />
       {#if $selectedProject.format === "scenes"}
-        <div>
         <div class="tabs">
           <div class="tab-list">
             <Tab tab="Scenes" />
             <Tab tab="Project" />
-            {#if !Platform.isMobile}
-              <Tab tab="Compile" />
-            {/if}
           </div>
         </div>
         {#if $selectedTab === "Scenes"}
           <div class="tab-panel-container">
             <ScenesPanel />
           </div>
-        {:else if $selectedTab === "Project"}
+        {:else}
           <div class="tab-panel-container">
             <ProjectDetails />
           </div>
-        {:else if !Platform.isMobile}
-          <div class="tab-panel-container">
-            <CompileLauncher />
-          </div>
         {/if}
-      </div>
-    {:else}
-      <div>
-        <div class="tabs">
-          <div class="tab-list">
-            <Tab tab="Project" />
-            {#if !Platform.isMobile}
-              <Tab tab="Compile" />
-            {/if}
-          </div>
+      {:else}
+        <div class="tab-panel-container">
+          <ProjectDetails />
         </div>
-        {#if $selectedTab === "Project"}
-          <div class="tab-panel-container">
-            <ProjectDetails />
-          </div>
-        {:else if !Platform.isMobile}
-          <div class="tab-panel-container">
-            <CompileLauncher />
-          </div>
-        {/if}
-      </div>
       {/if}
     {/if}
   </div>
