@@ -1,6 +1,6 @@
 <script lang="ts">
   import { selectedProject, waitingForSync } from "src/model/stores";
-  import CompileView from "../compile/CompileView.svelte";
+  import CompileLauncher from "./CompileLauncher.svelte";
   import { Platform } from "obsidian";
   import ProjectDetails from "./ProjectDetails.svelte";
   import ProjectPicker from "./ProjectPicker.svelte";
@@ -56,8 +56,8 @@
             <ProjectDetails />
           </div>
         {:else if !Platform.isMobile}
-          <div class="tab-panel-container disconnected">
-            <CompileView />
+          <div class="tab-panel-container">
+            <CompileLauncher />
           </div>
         {/if}
       </div>
@@ -77,7 +77,7 @@
           </div>
         {:else if !Platform.isMobile}
           <div class="tab-panel-container">
-            <CompileView />
+            <CompileLauncher />
           </div>
         {/if}
       </div>
@@ -100,11 +100,6 @@
   .tab-panel-container {
     background: var(--background-primary);
     padding: var(--size-4-1) var(--size-4-2);
-  }
-
-  .tab-panel-container.disconnected {
-    background: none;
-    padding: 0;
   }
 
   .inkwell-sync-wait {

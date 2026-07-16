@@ -42,6 +42,44 @@
   background-color: var(--inkwell-status-scrap);
 }
 
+/* Compile step-kind pills (Scene / Join / Manuscript) — distinct semantic
+   colors so a step's type is scannable at a glance. Under :root so a user
+   snippet can override them; used by the Compile builder's step list and the
+   selected-step config header. */
+:root {
+  --inkwell-kind-scene: #6ea8fe;
+  --inkwell-kind-join: #e0a52b;
+  --inkwell-kind-manuscript: #52c294;
+}
+
+.inkwell-kind-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-s);
+  padding: 0 var(--size-4-1);
+  font-size: var(--font-smallest);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+}
+
+.inkwell-kind-pill.kind-scene {
+  color: var(--inkwell-kind-scene);
+  background-color: color-mix(in srgb, var(--inkwell-kind-scene) 16%, transparent);
+}
+
+.inkwell-kind-pill.kind-join {
+  color: var(--inkwell-kind-join);
+  background-color: color-mix(in srgb, var(--inkwell-kind-join) 16%, transparent);
+}
+
+.inkwell-kind-pill.kind-manuscript {
+  color: var(--inkwell-kind-manuscript);
+  background-color: color-mix(in srgb, var(--inkwell-kind-manuscript) 16%, transparent);
+}
+
 /* Ensure the add-step modal frame never scrolls — only .modal-content does.
    Some Obsidian versions put overflow:auto on .modal itself, which causes the
    absolutely-positioned close button to scroll away with the content. */
