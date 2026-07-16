@@ -1,11 +1,10 @@
 <script lang="ts">
   import { selectedProject, waitingForSync } from "src/model/stores";
   import CompileView from "../compile/CompileView.svelte";
-  import NewSceneField from "./NewSceneField.svelte";
   import { Platform } from "obsidian";
   import ProjectDetails from "./ProjectDetails.svelte";
   import ProjectPicker from "./ProjectPicker.svelte";
-  import SceneList from "./SceneList.svelte";
+  import ScenesPanel from "./ScenesPanel.svelte";
   import { selectedTab } from "../stores";
   import Tab from "./Tab.svelte";
 
@@ -49,8 +48,7 @@
         </div>
         {#if $selectedTab === "Scenes"}
           <div class="tab-panel-container">
-            <SceneList />
-            <NewSceneField />
+            <ScenesPanel />
           </div>
         {:else if $selectedTab === "Project"}
           <div class="tab-panel-container">
@@ -92,8 +90,9 @@
   }
 
   .tab-list {
+    display: flex;
     margin: 0;
-    font-size: 0; /* To remove spacing between tabs */
+    border-bottom: var(--border-width) solid var(--background-modifier-border);
   }
 
   .tab-panel-container {

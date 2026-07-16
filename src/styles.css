@@ -1,6 +1,45 @@
 :root {
   --inkwell-explorer-font-size: var(--font-ui-medium);
   --inkwell-explorer-indent-size: 2em;
+
+  /* Scene status colors, keyed to each scene's front-matter `status:`. A fixed
+     semantic vocabulary (draft = amber, revising = blue, complete = green,
+     scrap = red) — deliberately literal rather than themed, and readable on
+     both light and dark. Declared under :root so a user snippet can override
+     any of them. (Obsidian's own --color-* live on `body`, so they can't be
+     referenced from here.) See the [data-scene-status] rules below. */
+  --inkwell-status-draft: #e0a52b;
+  --inkwell-status-revising: #5b9bf5;
+  --inkwell-status-complete: #52c294;
+  --inkwell-status-scrap: #f0616d;
+}
+
+/* Scene status bullet. The element is rendered wherever a scene is listed
+   (List / Cards / Outline); color is driven by the nearest [data-scene-status]
+   ancestor. Matching is case-insensitive; an unknown or absent status keeps the
+   neutral fallback. */
+.inkwell-scene-status {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--text-faint);
+}
+
+[data-scene-status="draft" i] .inkwell-scene-status {
+  background-color: var(--inkwell-status-draft);
+}
+
+[data-scene-status="revising" i] .inkwell-scene-status {
+  background-color: var(--inkwell-status-revising);
+}
+
+[data-scene-status="complete" i] .inkwell-scene-status {
+  background-color: var(--inkwell-status-complete);
+}
+
+[data-scene-status="scrap" i] .inkwell-scene-status {
+  background-color: var(--inkwell-status-scrap);
 }
 
 /* Ensure the add-step modal frame never scrolls — only .modal-content does.

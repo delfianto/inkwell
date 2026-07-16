@@ -1,6 +1,7 @@
 import {
   decodeFlatScenes,
   encodeIndentedScenes,
+  groupByAct,
   numberScenes,
   setProjectFrontmatter,
 } from "src/model/project-utils";
@@ -12,6 +13,14 @@ import {
 } from "src/model/types";
 
 const flat = (titles: string[]): IndentedScene[] => titles.map((title) => ({ title, indent: 0 }));
+
+// Group a flat/indented scene list into acts and reduce to plain titles for
+// concise assertions.
+const grouped = (scenes: IndentedScene[]) =>
+  groupByAct(numberScenes(scenes)).map((act) => ({
+    header: act.header.title,
+    children: act.children.map((c) => c.title),
+  }));
 
 describe("encodeIndentedScenes / decodeFlatScenes", () => {
   it("round-trips a flat list", () => {
@@ -181,5 +190,68 @@ describe("numberScenes", () => {
     ];
     const result = numberScenes(scenes).map((s) => s.numbering);
     expect(result).toEqual([[1], [1, 1], [2]]);
+  });
+});
+
+describe("groupByAct", () => {
+  it("flat list: one act per scene, each with no children", () => {
+    expect(grouped(flat(["one", "two", "three"]))).toEqual([
+      { header: "one", children: [] },
+      { header: "two", children: [] },
+      { header: "three", children: [] },
+    ]);
+  });
+
+  it("single act: one indent-0 header with its following indented scenes", () => {
+    const scenes: IndentedScene[] = [
+      { title: "Act I", indent: 0 },
+      { title: "Opening", indent: 1 },
+      { title: "The Ask", indent: 1 },
+    ];
+    expect(grouped(scenes)).toEqual([{ header: "Act I", children: ["Opening", "The Ask"] }]);
+  });
+
+  it("multiple acts: a new act starts at each indent-0 scene", () => {
+    const scenes: IndentedScene[] = [
+      { title: "Act I", indent: 0 },
+      { title: "a", indent: 1 },
+      { title: "Act II", indent: 0 },
+      { title: "b", indent: 1 },
+      { title: "c", indent: 1 },
+    ];
+    expect(grouped(scenes)).toEqual([
+      { header: "Act I", children: ["a"] },
+      { header: "Act II", children: ["b", "c"] },
+    ]);
+  });
+
+  it("deep nesting is flattened to the two-level cap (no third level)", () => {
+    const scenes: IndentedScene[] = [
+      { title: "Act I", indent: 0 },
+      { title: "child", indent: 1 },
+      { title: "grandchild", indent: 2 },
+      { title: "sibling", indent: 1 },
+    ];
+    // grandchild (indent 2) becomes a flat sibling card under the act, not a
+    // nested third level.
+    expect(grouped(scenes)).toEqual([
+      { header: "Act I", children: ["child", "grandchild", "sibling"] },
+    ]);
+  });
+
+  it("a leading indented orphan becomes its own act header", () => {
+    const scenes: IndentedScene[] = [
+      { title: "orphan", indent: 1 },
+      { title: "Act I", indent: 0 },
+      { title: "child", indent: 1 },
+    ];
+    expect(grouped(scenes)).toEqual([
+      { header: "orphan", children: [] },
+      { header: "Act I", children: ["child"] },
+    ]);
+  });
+
+  it("returns an empty array for no scenes", () => {
+    expect(groupByAct([])).toEqual([]);
   });
 });

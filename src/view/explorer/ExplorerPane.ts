@@ -6,7 +6,6 @@ import {
   type MultipleSceneProject,
   type Project,
   projects,
-  scenePath,
   selectedProject,
 } from "src/model";
 import {
@@ -74,11 +73,6 @@ export class ExplorerPane extends ItemView {
     context.set("showConfirmModal", (options: ConfirmActionOptions) => {
       new ConfirmActionModal(this.app, options).open();
     });
-
-    // Create a fully-qualified path to a scene from its name.
-    context.set("makeScenePath", (project: MultipleSceneProject, sceneName: string) =>
-      scenePath(sceneName, project, this.app.vault),
-    );
 
     // Context function for opening scene notes on click
     context.set("onSceneClick", (path: string, paneType: PaneType | boolean) => {

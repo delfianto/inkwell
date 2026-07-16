@@ -212,6 +212,45 @@ export function formatSceneNumber(numbering: number[]): string {
   return numbering.join(".");
 }
 
+/** A top-level scene ("Act") and the flattened list of its nested scenes. */
+export interface SceneGroup<T extends { indent: number }> {
+  /** The indent-0 scene that heads the act (or, for a leading orphan run of
+   *  indented scenes with no preceding indent-0 scene, that first scene). */
+  header: T;
+  /** Every following scene at indent > 0, flattened. Deeper nesting is not
+   *  preserved here — the Cards view caps hierarchy at two levels, so all
+   *  descendants render as sibling cards under the act header. */
+  children: T[];
+}
+
+/**
+ * Groups an ordered, indented scene list into acts for the Cards view: a new
+ * act begins at each indent-0 scene, and every following indent > 0 scene
+ * becomes one of that act's (flattened) children until the next indent-0 scene.
+ *
+ * Generic over any `{ indent }`-bearing scene shape ({@link NumberedScene} or
+ * the view layer's enriched scenes) so the same grouping serves every view.
+ *
+ * A flat project (no indentation) yields one act per scene, each with no
+ * children — callers that want a flat card grid should check for the absence
+ * of nesting first.
+ */
+export function groupByAct<T extends { indent: number }>(scenes: T[]): SceneGroup<T>[] {
+  const acts: SceneGroup<T>[] = [];
+  let current: SceneGroup<T> | null = null;
+
+  for (const scene of scenes) {
+    if (scene.indent === 0 || current === null) {
+      current = { header: scene, children: [] };
+      acts.push(current);
+    } else {
+      current.children.push(scene);
+    }
+  }
+
+  return acts;
+}
+
 export async function insertProjectFrontmatter(app: App, path: string, project: Project) {
   const exists = await app.vault.adapter.exists(path);
   if (!exists) {

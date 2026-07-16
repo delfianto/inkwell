@@ -5,6 +5,7 @@ import {
   ICON_SVG,
   InkwellSettingsTab,
   LeafStyler,
+  sceneViewMode,
   selectedTab,
 } from "./view";
 import {
@@ -102,6 +103,15 @@ export default class InkwellPlugin extends Plugin {
     await this.loadSettings();
     this.addSettingTab(new InkwellSettingsTab(this.app, this));
 
+    // Persist the Scenes sub-view choice. The store is seeded from settings in
+    // loadSettings(); mirror later changes back into pluginSettings so the
+    // passthrough-save subscription above writes them to disk.
+    this.unsubscribers.push(
+      sceneViewMode.subscribe((mode) => {
+        pluginSettings.update((s) => (s ? { ...s, sceneViewMode: mode } : s));
+      }),
+    );
+
     this.projectStoreSync = new ProjectStoreSync(this.app, this.registerEvent.bind(this));
 
     this.app.workspace.onLayoutReady(this.postLayoutInit.bind(this));
@@ -146,6 +156,7 @@ export default class InkwellPlugin extends Plugin {
     ) as InkwellPluginSettings;
     pluginSettings.set(trackedSettings);
     selectedProjectPath.set(trackedSettings.selectedProjectPath);
+    sceneViewMode.set(trackedSettings.sceneViewMode);
 
     // User scripts load imperatively first; workflows may reference them.
     this.userScriptObserver = new UserScriptObserver(this.app.vault);
