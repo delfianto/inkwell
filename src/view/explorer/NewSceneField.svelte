@@ -1,10 +1,19 @@
 <script lang="ts">
+  import { getContext, onMount } from "svelte";
   import { invalidFilenameCharacters, isValidFilename } from "../utils";
-  import { getContext } from "svelte";
+  import { newSceneFieldVisible } from "../stores";
   import { selectedProject } from "src/model/stores";
 
   let newSceneName = $state("");
-  let newSceneInput: HTMLElement | null = $state(null);
+  let newSceneInput: HTMLInputElement | null = $state(null);
+
+  // Shown on demand from the toolbar's ＋ action, so grab focus on mount.
+  onMount(() => newSceneInput?.focus());
+
+  function dismiss() {
+    newSceneName = "";
+    newSceneFieldVisible.set(false);
+  }
 
   const sceneNames =
     $selectedProject?.format === "scenes"
@@ -47,9 +56,11 @@
         if (e.key === "Enter") {
           onNewSceneEnter(!e.shiftKey);
         } else if (e.key === "Escape") {
-          newSceneName = "";
-          newSceneInput?.blur();
+          dismiss();
         }
+      }}
+      onblur={() => {
+        if (newSceneName.length === 0) dismiss();
       }}
     />
   </div>
