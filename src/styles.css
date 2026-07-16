@@ -101,13 +101,13 @@
   min-height: 0;
 }
 
-/* Auto-hide the scene panel's scroll thumb: transparent when idle, revealed on
-   hover (or while focused within). We define a custom scrollbar (at the probed
-   native width, so switching native → custom causes no reflow) because the
-   thumb can only be styled once the bar is custom-rendered. Gated on
+/* Give the scene panel a subtle, always-visible custom scrollbar. Rendering a
+   custom bar (at the probed native width, so switching native → custom causes
+   no reflow) lets us tone the thumb down to Obsidian's faint thumb color, inset
+   into a thin pill. No hover/hide behavior — always shown, just quiet. Gated on
    `.inkwell-classic-scrollbars` — set by the plugin only when the environment
    uses space-taking classic scrollbars — so users on native overlay scrollbars
-   (which already auto-hide) aren't switched to a classic bar. */
+   aren't switched to a classic bar. */
 body.inkwell-classic-scrollbars .inkwell-explorer .tab-panel-container::-webkit-scrollbar {
   width: var(--inkwell-scrollbar-width, 12px);
 }
@@ -123,19 +123,10 @@ body.inkwell-classic-scrollbars .inkwell-explorer .tab-panel-container::-webkit-
 }
 
 body.inkwell-classic-scrollbars .inkwell-explorer .tab-panel-container::-webkit-scrollbar-thumb {
-  background-color: transparent;
+  background-color: var(--scrollbar-thumb-bg, rgba(255, 255, 255, 0.1));
   border: var(--size-2-2) solid transparent;
   background-clip: padding-box;
   border-radius: var(--radius-l);
-}
-
-body.inkwell-classic-scrollbars
-  .inkwell-explorer
-  .tab-panel-container:hover::-webkit-scrollbar-thumb,
-body.inkwell-classic-scrollbars
-  .inkwell-explorer
-  .tab-panel-container:focus-within::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb-bg, rgba(255, 255, 255, 0.2));
 }
 
 .modal.inkwell-new-project-modal {
