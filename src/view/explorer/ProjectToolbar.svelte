@@ -72,7 +72,7 @@
       aria-label="Open compile builder"
       onclick={openCompile}
     >
-      <Icon iconName="book-open" />
+      <Icon iconName="package" />
     </button>
   {/if}
 </div>
