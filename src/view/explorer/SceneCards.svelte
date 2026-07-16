@@ -228,6 +228,7 @@
   .inkwell-act-toggle {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: var(--size-4-2);
     flex: 1;
     min-width: 0;
