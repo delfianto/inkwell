@@ -83,6 +83,7 @@
     align-items: center;
     gap: var(--size-4-2);
     padding: var(--size-4-2);
+    flex-shrink: 0;
   }
 
   .inkwell-toolbar-spacer {

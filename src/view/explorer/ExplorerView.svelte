@@ -46,8 +46,17 @@
 {/if}
 
 <style>
+  /* Fixed-height flex column: the picker / toolbar / tabs stay pinned while
+     only the panel below them (the scene list, etc.) scrolls. */
   .inkwell-explorer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     font-size: var(--inkwell-explorer-font-size);
+  }
+
+  .tabs {
+    flex-shrink: 0;
   }
 
   .tab-list {
@@ -57,6 +66,9 @@
   }
 
   .tab-panel-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     background: var(--background-primary);
     padding: var(--size-4-1) var(--size-4-2);
   }
