@@ -48,12 +48,12 @@
   }
 
   // @ts-expect-error - Sortable's mount typing does not cover custom plugins
-  Sortable.mount(new IndentPlugin());
+  SortableCore.mount(new IndentPlugin());
 </script>
 
 <script lang="ts" generics="T extends { id: string; indent?: number }">
   import { onMount, type Snippet } from "svelte";
-  import Sortable from "sortablejs/modular/sortable.core.esm.js";
+  import SortableCore from "sortablejs/modular/sortable.core.esm.js";
   import type SortableType from "sortablejs";
 
   interface Props {
@@ -119,7 +119,7 @@
     };
 
     if (listElement) {
-      Sortable.create(listElement, opts);
+      SortableCore.create(listElement, opts);
     }
   });
 </script>

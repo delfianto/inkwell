@@ -110,6 +110,8 @@ export class UserScriptObserver {
       exports,
     };
 
+    // User-authored compile steps are JavaScript by design.
+    // eslint-disable-next-line no-eval
     const evaluateScript = globalThis.eval(
       `(function anonymous(require, module, exports){${js}\n})`,
     );
