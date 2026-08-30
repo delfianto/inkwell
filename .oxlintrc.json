@@ -36,6 +36,8 @@
     "no-ternary": "off",
     "no-continue": "off",
     "no-magic-numbers": "off",
+    // Separate declarations are easier to scan and produce smaller diffs.
+    "one-var": "off",
     // Single-line guards (`if (x) return;`) match the surrounding style.
     "curly": ["error", "multi-line"],
     // The styles.css side-effect import is how the bundle emits styles.css.
