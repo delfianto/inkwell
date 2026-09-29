@@ -5,7 +5,7 @@ import {
   numberScenes,
   setProjectFrontmatter,
 } from "src/model/project-utils";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import {
   type IndentedScene,
   type MultipleSceneProject,
