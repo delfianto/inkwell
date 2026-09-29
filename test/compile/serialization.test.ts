@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 import { deserializeWorkflow, serializeWorkflow } from "src/compile/serialization";
 import { PLACEHOLDER_MISSING_STEP, type Workflow } from "src/compile/steps/abstract-compile-step";
 import { BUILTIN_STEPS } from "src/compile/steps";

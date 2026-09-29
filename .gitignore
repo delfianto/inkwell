@@ -35,3 +35,4 @@ test-vault-inkwell/.obsidian/graph.json
 # test vault — Inkwell runtime data (workflows + user scripts) and sessions
 test-vault-inkwell/.obsidian/inkwell/
 test-vault-inkwell/inkwell-sessions.json
+.vitest/

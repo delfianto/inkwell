@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { findScene, projectForPath, scenePathForLocation } from "src/model/scene-navigation";
 import { type MultipleSceneProject, type Project, type SingleSceneProject } from "src/model/types";

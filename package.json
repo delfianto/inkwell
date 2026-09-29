@@ -26,17 +26,24 @@
     "@sveltejs/vite-plugin-svelte": "^7.2.0",
     "@types/node": "^26.1.1",
     "@types/sortablejs": "^1.15.9",
-    "@voidzero-dev/vite-plus-core": "^0.3.0",
+    "@voidzero-dev/vite-plus-core": "1.0.0",
     "builtin-modules": "^5.3.0",
     "obsidian": "^1.13.1",
     "svelte": "^5.56.5",
     "svelte-check": "^4.7.3",
     "tslib": "^2.8.1",
     "typescript": "^6.0.3",
-    "vite-plus": "^0.3.0",
-    "vitest": "4.1.11"
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0",
+    "vite-plus": "1.0.0"
   },
   "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@^0.3.0"
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "bun",
+      "version": "1.4.2",
+      "onFail": "download"
+    }
   }
 }
