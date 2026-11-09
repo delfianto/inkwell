@@ -38,10 +38,10 @@ export const RemoveCommentsStep = makeBuiltinStep({
 
     const replaceComments = (contents: string) => {
       if (removeMarkdownComments) {
-        contents = contents.replace(MARKDOWN_COMMENTS_REGEX, () => "");
+        contents = contents.replaceAll(MARKDOWN_COMMENTS_REGEX, () => "");
       }
       if (removeHTMLComments) {
-        contents = contents.replace(HTML_COMMENTS_REGEX, () => "");
+        contents = contents.replaceAll(HTML_COMMENTS_REGEX, () => "");
       }
 
       return contents;

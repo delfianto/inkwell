@@ -20,13 +20,13 @@ export const RemoveStrikethroughsStep = makeBuiltinStep({
     if (context.kind === CompileStepKind.Scene) {
       return (input as CompileSceneInput[]).map((sceneInput) =>
         Object.assign(sceneInput, {
-          contents: sceneInput.contents.replace(STRIKETHROUGH_REGEX, () => ""),
+          contents: sceneInput.contents.replaceAll(STRIKETHROUGH_REGEX, () => ""),
         }),
       );
     }
     return {
       ...(input as CompileManuscriptInput),
-      contents: (input as CompileManuscriptInput).contents.replace(STRIKETHROUGH_REGEX, () => ""),
+      contents: (input as CompileManuscriptInput).contents.replaceAll(STRIKETHROUGH_REGEX, () => ""),
     };
   },
 });
