@@ -264,7 +264,7 @@ export const DEFAULT_WORKFLOWS: Record<string, SerializedWorkflow> = {
       {
         id: "concatenate-text",
         optionValues: {
-          separator: "\\n\\n---\\n\\n",
+          separator: String.raw`\n\n---\n\n`,
         },
       },
       {
