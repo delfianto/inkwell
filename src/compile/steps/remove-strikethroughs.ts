@@ -26,7 +26,10 @@ export const RemoveStrikethroughsStep = makeBuiltinStep({
     }
     return {
       ...(input as CompileManuscriptInput),
-      contents: (input as CompileManuscriptInput).contents.replaceAll(STRIKETHROUGH_REGEX, () => ""),
+      contents: (input as CompileManuscriptInput).contents.replaceAll(
+        STRIKETHROUGH_REGEX,
+        () => "",
+      ),
     };
   },
 });
