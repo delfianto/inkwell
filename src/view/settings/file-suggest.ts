@@ -1,7 +1,15 @@
-import { type TAbstractFile, TFile } from "obsidian";
+import { type App, type TAbstractFile, TFile } from "obsidian";
 import { TextInputSuggest } from "./suggest";
 
 export class FileSuggest extends TextInputSuggest<TFile> {
+  constructor(
+    app: App,
+    input: HTMLInputElement,
+    private folder: string | null = null,
+  ) {
+    super(app, input);
+  }
+
   getSuggestions(inputStr: string): TFile[] {
     const abstractFiles = this.app.vault.getAllLoadedFiles();
     const files: TFile[] = [];
@@ -11,6 +19,7 @@ export class FileSuggest extends TextInputSuggest<TFile> {
       if (
         file instanceof TFile &&
         file.extension === "md" &&
+        (this.folder === null || file.path.startsWith(`${this.folder}/`)) &&
         file.path.toLowerCase().contains(lowerCaseInputStr)
       ) {
         files.push(file);

@@ -1,11 +1,20 @@
 <script lang="ts">
   import { selectedProject, waitingForSync } from "src/model/stores";
+  import CodexPanel from "./CodexPanel.svelte";
   import ProjectDetails from "./ProjectDetails.svelte";
   import ProjectPicker from "./ProjectPicker.svelte";
   import ProjectToolbar from "./ProjectToolbar.svelte";
   import ScenesPanel from "./ScenesPanel.svelte";
   import { selectedTab } from "../stores";
   import Tab from "./Tab.svelte";
+
+  let codexSelection = $state<{ projectPath: string; entryPath: string } | null>(null);
+
+  function openCodex(entryPath?: string) {
+    const projectPath = $selectedProject?.vaultPath;
+    codexSelection = projectPath && entryPath ? { projectPath, entryPath } : null;
+    selectedTab.set("Codex");
+  }
 </script>
 
 {#if $waitingForSync}
@@ -19,26 +28,37 @@
   <div class="inkwell-explorer">
     <ProjectPicker />
     {#if $selectedProject}
-      <ProjectToolbar />
       {#if $selectedProject.format === "scenes"}
         <div class="tabs">
           <div class="tab-list">
             <Tab tab="Scenes" />
+            <Tab tab="Codex" />
             <Tab tab="Project" />
           </div>
         </div>
         {#if $selectedTab === "Scenes"}
-          <div class="tab-panel-container">
-            <ScenesPanel />
-          </div>
-        {:else}
-          <div class="tab-panel-container">
-            <ProjectDetails />
-          </div>
+          <ProjectToolbar onCodex={openCodex} />
         {/if}
+        <div class="tab-panel-container">
+          {#if $selectedTab === "Scenes"}
+            <ScenesPanel project={$selectedProject} />
+          {:else if $selectedTab === "Codex"}
+            {@const project = $selectedProject}
+            {#key project.vaultPath}
+              <CodexPanel {project}
+                entryPath={codexSelection?.projectPath === project.vaultPath ? codexSelection.entryPath : null}
+                onSelect={(entryPath) => {
+                  codexSelection = entryPath ? { projectPath: project.vaultPath, entryPath } : null;
+                }}
+              />
+            {/key}
+          {:else}
+            {#key $selectedProject.vaultPath}<ProjectDetails />{/key}
+          {/if}
+        </div>
       {:else}
         <div class="tab-panel-container">
-          <ProjectDetails />
+          {#key $selectedProject.vaultPath}<ProjectDetails />{/key}
         </div>
       {/if}
     {/if}

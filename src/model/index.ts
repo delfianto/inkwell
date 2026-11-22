@@ -2,6 +2,7 @@
 // many model modules; importing them through this barrel keeps those files
 // under the import/max-dependencies limit without scattering deep paths.
 export * from "./types";
+export { DEFAULT_CODEX_FOLDER } from "./codex";
 export * from "./stores";
 export * from "./scene-navigation";
 export * from "./project-utils";

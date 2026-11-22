@@ -3,17 +3,17 @@ import {
   type CachedMetadata,
   type EventRef,
   type MetadataCache,
-  normalizePath,
   TFile,
   type Vault,
 } from "obsidian";
 import { decodeFlatScenes, setProjectFrontmatter } from "src/model/project-utils";
-import { EBOOK_STRING_KEYS, type EbookMetadata, type Project } from "./types";
+import { EBOOK_STRING_KEYS, type EbookMetadata, type IndentedScene, type Project } from "./types";
+import { fileNameFromPath, resolveRelativeVaultPath, vaultParentPath } from "src/lib/path";
 import { findScene, sceneFolderPath } from "./scene-navigation";
 import { get, type Unsubscriber } from "svelte/store";
 import { projects as projectsStore, selectedProjectPath, updateScenesProject } from "./stores";
 import { deepEqual } from "src/lib/deep-equal";
-import { fileNameFromPath } from "src/lib/path";
+import { readCodexFolder } from "./codex";
 import { SyncWaiter } from "./sync-waiter";
 
 interface FileWithMetadata {
@@ -80,10 +80,20 @@ export class ProjectStoreSync {
     // Register vault listeners only after the initial discover/load
     // completes, so handlers cannot fire during initialization.
     this.registerEvent(this.app.metadataCache.on("changed", this.fileMetadataChanged.bind(this)));
-    this.registerEvent(this.app.vault.on("create", (f) => this.fileCreated(f as TFile)));
-    this.registerEvent(this.app.vault.on("delete", (f) => this.fileDeleted(f as TFile)));
     this.registerEvent(
-      this.app.vault.on("rename", (f, oldPath) => this.fileRenamed(f as TFile, oldPath)),
+      this.app.vault.on("create", (file) => {
+        if (file instanceof TFile && file.extension === "md") this.fileCreated(file);
+      }),
+    );
+    this.registerEvent(
+      this.app.vault.on("delete", (file) => {
+        if (file instanceof TFile && file.extension === "md") this.fileDeleted(file);
+      }),
+    );
+    this.registerEvent(
+      this.app.vault.on("rename", (file, oldPath) => {
+        if (file instanceof TFile) this.fileRenamed(file, oldPath);
+      }),
     );
   }
 
@@ -298,7 +308,10 @@ export class ProjectStoreSync {
   async projectsStoreChanged(newValue: Project[]) {
     for (const project of newValue) {
       const old = this.lastKnownProjectsByPath[project.vaultPath];
-      if (!old || !deepEqual(project, old)) {
+      if (
+        !old ||
+        !deepEqual({ ...project, unknownFiles: undefined }, { ...old, unknownFiles: undefined })
+      ) {
         this.pathsToIgnoreNextChange.add(project.vaultPath);
         await this.writeProjectFrontmatter(project);
       }
@@ -334,16 +347,19 @@ export class ProjectStoreSync {
     if (format === "scenes") {
       const scenes = decodeFlatScenes(fm["scenes"]);
       const sceneFolder = typeof fm["sceneFolder"] === "string" ? fm["sceneFolder"] : "/";
+      const codexFolder = readCodexFolder(vaultPath, fm["codexFolder"]);
       const sceneTemplate =
         typeof fm["sceneTemplate"] === "string" && fm["sceneTemplate"].length > 0
           ? fm["sceneTemplate"]
           : null;
+      const templateMode =
+        sceneTemplate && fm["sceneTemplateMode"] === "chapter" ? "chapter" : null;
+      const storyTime = fm["storyTime"] === "calendar" ? "calendar" : null;
       const ignoredFiles: string[] = Array.isArray(fm["ignoredFiles"])
         ? fm["ignoredFiles"].filter((v: unknown): v is string => typeof v === "string")
         : [];
-      const normalizedSceneFolder = normalizePath(
-        `${fileWithMetadata.file.parent?.path ?? ""}/${sceneFolder}`,
-      );
+      const parentPath = fileWithMetadata.file.parent?.path ?? vaultParentPath(vaultPath);
+      const normalizedSceneFolder = resolveRelativeVaultPath(parentPath, sceneFolder) ?? parentPath;
 
       let filenamesInSceneFolder: string[] = [];
       if (await this.vault.adapter.exists(normalizedSceneFolder)) {
@@ -359,11 +375,7 @@ export class ProjectStoreSync {
       );
       const dirty = knownScenes.length !== scenes.length;
 
-      const sceneTitles = new Set(scenes.map((s) => s.title));
-      const newScenes = filenamesInSceneFolder.filter((s) => !sceneTitles.has(s));
-
-      const ignoredRegexes = ignoredFiles.filter(Boolean).map((p) => ignoredPatternToRegex(p));
-      const unknownFiles = newScenes.filter((s) => !ignoredRegexes.some((r) => r.test(s)));
+      const unknownFiles = unlistedSceneNames(filenamesInSceneFolder, scenes, ignoredFiles);
 
       return {
         project: {
@@ -372,10 +384,13 @@ export class ProjectStoreSync {
           titleInFrontmatter,
           vaultPath,
           sceneFolder,
+          ...(codexFolder ? { codexFolder } : {}),
           scenes: knownScenes,
           ignoredFiles,
           unknownFiles,
           sceneTemplate,
+          ...(templateMode ? { sceneTemplateMode: templateMode } : {}),
+          ...(storyTime ? { storyTime } : {}),
           workflow,
           ebook,
         },
@@ -432,6 +447,20 @@ function compareProjectsByTitle(a: Project, b: Project): number {
   if (a.title < b.title) return -1;
   if (a.title > b.title) return 1;
   return 0;
+}
+
+export function unlistedSceneNames(
+  names: string[],
+  scenes: IndentedScene[],
+  ignoredFiles: string[] | null,
+): string[] {
+  const listed = new Set(scenes.map((scene) => scene.title));
+  const ignored = (ignoredFiles ?? [])
+    .filter(Boolean)
+    .map((pattern) => ignoredPatternToRegex(pattern));
+  return names.filter(
+    (name) => !listed.has(name) && !ignored.some((pattern) => pattern.test(name)),
+  );
 }
 
 // Only regex-special characters need escaping; escaping the rest (e.g. `&`,

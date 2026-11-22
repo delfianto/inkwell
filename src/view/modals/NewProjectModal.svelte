@@ -1,24 +1,28 @@
 <script lang="ts">
+  import { getContext, untrack } from "svelte";
   import { normalizePath, type TFolder } from "obsidian";
-  import { getContext } from "svelte";
   import Icon from "../components/Icon.svelte";
 
-  const { parent }: { parent: TFolder } = $props();
+  const { parent: initialFolder }: { parent: TFolder } = $props();
+  let parent = $state(untrack(() => initialFolder));
 
   let type: "scenes" | "single" = $state("scenes");
   let title: string = $state("");
+  let creating = $state(false);
+  let error = $state("");
 
   const regex = /[:\\/]/u;
-  const hasInvalidChars = $derived(title.length > 0 && regex.test(title));
-  const valid = $derived(Boolean(title) && !regex.test(title));
+  const name = $derived(title.trim());
+  const hasInvalidChars = $derived(regex.test(name) || name === "." || name === "..");
+  const valid = $derived(Boolean(name) && !hasInvalidChars);
   const projectPath = $derived.by(() => {
     if (!valid) return "";
     return type === "scenes"
-      ? normalizePath(`${parent.path}/${title}/Index.md`)
-      : normalizePath(`${parent.path}/${title}.md`);
+      ? normalizePath(`${parent.path}/${name}/Index.md`)
+      : normalizePath(`${parent.path}/${name}.md`);
   });
   const pathSegments = $derived(projectPath.length > 0 ? projectPath.split("/") : []);
-  const parentLabel = $derived(parent.isRoot() ? "the vault root" : `“${parent.name}”`);
+  const parentLabel = $derived(parent.isRoot() ? "Vault root" : parent.path);
 
   const createProject: (
     format: "scenes" | "single",
@@ -26,9 +30,26 @@
     path: string
   ) => Promise<void> = getContext("createProject");
   const close: () => void = getContext("close");
+  const chooseFolder: (select: (folder: TFolder) => void) => void = getContext("chooseFolder");
 
-  function onCreateProject() {
-    if (valid) createProject(type, title, projectPath);
+  async function onCreateProject() {
+    if (!valid || creating) return;
+    creating = true;
+    error = "";
+    try {
+      await createProject(type, name, projectPath);
+    } catch (error_) {
+      error = error_ instanceof Error ? error_.message : "Could not create the project.";
+    } finally {
+      creating = false;
+    }
+  }
+
+  function changeFolder() {
+    chooseFolder((folder) => {
+      parent = folder;
+      error = "";
+    });
   }
 
   function autofocus(node: HTMLElement) {
@@ -52,9 +73,10 @@
 </script>
 
 <div class="inkwell-new-project">
-  <p class="inkwell-np-subtitle">
-    Created in {parentLabel} · you can rename or move it anytime.
-  </p>
+  <div class="inkwell-np-destination">
+    <span class="inkwell-np-folder">{parentLabel}</span>
+    <button type="button" disabled={creating} onclick={changeFolder}>Change folder</button>
+  </div>
 
   <span class="inkwell-np-section-label">Project type</span>
   <div class="inkwell-np-types">
@@ -64,6 +86,7 @@
         class="inkwell-type-card"
         class:selected={type === t.id}
         aria-pressed={type === t.id}
+        disabled={creating}
         onclick={() => {
           type = t.id;
         }}
@@ -85,6 +108,7 @@
     type="text"
     placeholder="My Project Title"
     bind:value={title}
+    readonly={creating}
     use:autofocus
     onkeydown={(e) => {
       if (e.key === "Enter") onCreateProject();
@@ -101,19 +125,24 @@
         {/each}
       </span>
     {:else if hasInvalidChars}
-      A title can’t contain the characters <code>: \ /</code>
+      {#if name === "." || name === ".."}
+        Use a different title for this project.
+      {:else}
+        A title can’t contain the characters <code>: \ /</code>
+      {/if}
     {:else}
       Enter a title to preview where it’ll be created.
     {/if}
   </div>
 
+  {#if error}<p class="inkwell-story-error" role="alert">{error}</p>{/if}
   <div class="inkwell-np-footer">
-    <button type="button" onclick={() => close()}>Cancel</button>
+    <button type="button" disabled={creating} onclick={() => close()}>Cancel</button>
     <button
       type="button"
       class="mod-cta"
-      disabled={!valid}
-      onclick={onCreateProject}>Create project</button
+      disabled={!valid || creating}
+      onclick={onCreateProject}>{creating ? "Creating…" : "Create project"}</button
     >
   </div>
 </div>
@@ -124,10 +153,22 @@
     flex-direction: column;
   }
 
-  .inkwell-np-subtitle {
+  .inkwell-np-destination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--size-4-2);
     margin: 0 0 var(--size-4-3);
-    color: var(--text-faint);
+    color: var(--text-muted);
     font-size: var(--font-ui-smaller);
+  }
+
+  .inkwell-np-folder {
+    overflow-wrap: anywhere;
+  }
+
+  .inkwell-np-destination button {
+    flex-shrink: 0;
   }
 
   .inkwell-np-section-label {
@@ -246,6 +287,7 @@
 
   .inkwell-np-path-text {
     font-family: var(--font-monospace);
+    overflow-wrap: anywhere;
   }
 
   .inkwell-np-path-text .crumb {

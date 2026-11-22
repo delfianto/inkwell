@@ -12,7 +12,10 @@ default dark theme.
 ## Contents
 
 - [The sidebar at a glance](#the-sidebar-at-a-glance)
-- [Scenes: List, Cards, Outline](#scenes-list-cards-outline)
+- [Scene views](#scene-views)
+- [Chapter preset](#chapter-preset)
+- [Codex and scene details](#codex-and-scene-details)
+- [Timeline](#timeline)
 - [Scene status colours](#scene-status-colours)
 - [The Project tab](#the-project-tab)
 - [eBook metadata modal](#ebook-metadata-modal)
@@ -25,18 +28,16 @@ Every project surface hangs off one pane. From top to bottom:
 
 1. **Project picker** — a dropdown of every Inkwell project in the vault, with the
    selected project's `Index.md` path shown beneath it.
-2. **Action toolbar** — icon buttons directly under the picker: **New scene**, the
-   **List · Cards · Outline** view switcher, and **Open compile builder** (the box
-   icon, far right). Icons only, so the row never wraps.
-3. **Scenes / Project tabs** — an equal-width, underline-style tab bar.
+2. **Scenes / Codex / Project tabs** — pick the part of your project you want to work in.
+3. **Scenes toolbar** — the scene-view button, **Scene details**, and **New scene**.
 
-A single-note project skips the tabs and toolbar and shows the Project fields
-directly, because there are no scenes to list.
+A single-note project shows the Project fields directly. **Open Compile builder**
+is below the Project controls on desktop.
 
-## Scenes: List, Cards, Outline
+## Scene views
 
-The Scenes tab renders your scene hierarchy three ways. The view switcher in the
-toolbar toggles between them and your choice is remembered. All three read the same
+The Scenes tab offers **List**, **Cards**, **Outline**, and **Timeline** in one
+menu and remembers your choice. The first three show the manuscript hierarchy with the same
 data: scene order and nesting from `Index.md`, the display title from each scene's
 `frontmatter.title` (falling back to the filename), the word count from Inkwell's
 tracker, and the status from each scene's `status:` frontmatter.
@@ -58,6 +59,60 @@ inline input at the top of the list; press Escape or blur it empty to dismiss.
 Scene rows are drag-to-reorder and drag-to-nest. A grab handle appears on hover so
 the interaction is discoverable — drag a row up/down to reorder, or right/left to
 change its nesting (which act it belongs to).
+
+## Chapter preset
+
+Open **Settings → Inkwell → Scene template → Use Chapter preset**.
+Inkwell sets up a shared Markdown template at `Templates/Inkwell Chapter.md`
+from the vault root. The edit button opens it so you can change defaults such
+as status, POV style, and tags.
+
+Use **New scene**, enter a title, and select **Create**. Inkwell copies the
+preset's properties and note body, fills the title, and stamps `updated` if
+the template includes that property. The Chapter preset works with Obsidian's
+templating plugins disabled. Choose a custom template from the vault's
+`Templates/` folder to use the existing Templater or core Templates workflow.
+When a global template is selected it is used for new scenes across projects.
+An older project's configured template is used when the global setting is clear.
+
+In **Scene details**, the **Chapter** tab holds the title, subtitle, arc, chapter
+number, status, context, and summary. **People and places** holds POV style,
+the focal character, cast, and locations. **Timing** holds dates and story
+order. Switch tabs as you edit, then use **Save scene details** to save the
+changes together. Use Obsidian Properties for the other fields, including mood, version,
+and tags. Saving Scene details refreshes `updated` on notes that include it.
+The Previous chapter and Next chapter buttons follow the order in the project
+index.
+
+## Codex and scene details
+
+Choose **Codex → Characters** or **Locations** to browse your reference notes
+or create one. Pick an entry to see its scenes in manuscript order, or select
+**Open note** to edit its Markdown.
+
+From **Scenes**, open a scene and click **Scene details**. Use the note pickers
+to set its point of view, cast, and location, then save. Reopen Scene details
+and click an assigned name to jump to its Codex entry. Each scene appears once
+per entry even when a character is assigned as both POV and cast.
+
+New projects have a `Codex/` folder beside the index with `Assets/`,
+`Locations/`, `Characters/`, and `Timeline/` subfolders.
+**Project → Codex folder** takes a path relative to the project directory.
+Drafts can share a Codex by entering a relative path such as `../Shared Codex`.
+Each draft lists appearances from its own manuscript.
+
+## Timeline
+
+Choose **Timeline** in the Scenes view menu. **Manuscript order** follows your
+project index. **Story order** uses the manual number from Scene details, and
+**Start date** uses `start` and displays the range through `finish` when set. Entering a start
+date in Scene details also fills the weekday. Ties follow manuscript order,
+and scenes missing the chosen sort value appear under **Unplaced**.
+Use the character or location filter to follow their scenes.
+
+The Timeline reads the YAML of scenes in the project index. The
+`Codex/Timeline/` folder is available for separate story reference notes.
+Compiling follows manuscript order.
 
 ## Scene status colours
 
@@ -89,11 +144,13 @@ The Project tab is deliberately lean: a one-line overview and the essentials.
 <img src="images/project-tab.png" width="330" alt="Project tab">
 
 - **Overview** — `words · scenes · acts` for the whole project.
-- **Title**, **Scene folder**, **Scene template** — the core fields. Longer
+- **Title**, **Scene folder**, and **Codex folder** are the core fields. Both
+  folder paths are relative to the directory containing the project index. Longer
   explanations sit behind an ⓘ affordance instead of permanent paragraphs of faint
   help text.
 - **eBook metadata launcher** — a card showing how many of the eleven eBook fields
   are set (`6 / 11 set`) that opens the metadata modal.
+- **Open Compile builder** — the last control on desktop.
 
 ## eBook metadata modal
 
@@ -117,14 +174,15 @@ sidecar file.
 
 ## Creating a project
 
-Three entry points create a project:
+Set **Settings → Inkwell → Writing projects folder** to give new projects a
+default home. **New project** in the sidebar and the command **Inkwell: Create
+new project** open the creation dialog with that folder selected. Use **Change
+folder** in the dialog for a one-off destination. When the setting is clear,
+Inkwell asks for a folder first.
 
-- The **command** "Inkwell: Create new project" (pick a folder, then fill the modal).
-- **Right-click a folder** in the file explorer → the Inkwell create action.
-- The **empty state** in the picker when the vault has no projects yet — an icon,
-  one line, and a **＋ New project…** button.
-
-All three open the same action-first modal:
+You can also right-click a folder in Obsidian's file explorer and choose
+**Create Inkwell Project** to start there. The project picker lists projects
+across the vault.
 
 <img src="images/new-project-modal.png" width="620" alt="New project modal">
 
@@ -132,10 +190,27 @@ Pick a **type** — Multi-scene (ordered notes + an index file) or Single note �
 selectable card, type a **title**, and watch the **live path preview** update.
 **Create project** is always visible (disabled until the title is valid).
 
+A new multi-scene project has this structure under its chosen destination.
+
+```text
+StoryA/
+  Index.md
+  Scenes/
+  Codex/
+    Assets/
+    Locations/
+    Characters/
+    Timeline/
+```
+
+In `Index.md`, `sceneFolder: Scenes` resolves beside the index. A local Codex
+is written as `codexFolder: ./Codex`. The leading dot distinguishes the
+project-relative path from an older vault-relative Codex setting.
+
 ## The Compile builder
 
 Compile is a full workspace pane, not a cramped sidebar column. Open it from the
-toolbar's box icon or the "Inkwell: Open compile builder" command.
+bottom of **Project** or the "Inkwell: Open compile builder" command.
 
 <img src="images/compile-builder.png" width="820" alt="Compile builder">
 

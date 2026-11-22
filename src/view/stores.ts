@@ -7,7 +7,7 @@ import { type TFile } from "obsidian";
 // Writable stores
 export const activeFile = writable<TFile | null>(null);
 
-export type ExplorerTab = "Scenes" | "Project";
+export type ExplorerTab = "Scenes" | "Codex" | "Project";
 export const selectedTab = writable<ExplorerTab>("Project");
 
 /**

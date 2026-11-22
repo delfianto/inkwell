@@ -1,18 +1,24 @@
 <script lang="ts">
+  import { DEFAULT_CODEX_FOLDER, ensureCodexFolders } from "src/model/codex";
   import {
+    DEFAULT_SCENE_FOLDER,
     EBOOK_STRING_KEYS,
     groupByAct,
     numberScenes,
     projectFolderPath,
     projects,
+    scenePathForFolder,
     selectedProject,
     selectedProjectPath,
+    unlistedSceneNames,
     updateScenesProject,
   } from "src/model";
   import { getContext, onMount } from "svelte";
-  import { FileSuggest } from "../settings/file-suggest";
+  import { Platform, TFile, TFolder } from "obsidian";
+  import { relativeVaultPath, resolveRelativeVaultPath, vaultParentPath } from "src/lib/path";
+  import { ensureVaultFolder } from "src/model/note-create";
   import { FolderSuggest } from "../settings/folder-suggest";
-  import { normalizePath } from "obsidian";
+  import Icon from "../components/Icon.svelte";
   import { selectedProjectWordCountStatus } from "../stores";
   import { useApp } from "../utils";
 
@@ -49,52 +55,75 @@
   }
 
   let sceneFolderInput: HTMLInputElement | null = $state(null);
+  let codexFolderInput: HTMLInputElement | null = $state(null);
+  const folderErrors = $state({ scenes: "", codex: "" });
+
   onMount(() => {
-    if (sceneFolderInput && $selectedProject!.format === "scenes") {
-      const projectPath = projectFolderPath($selectedProject!, app.vault);
-      new FolderSuggest(app, sceneFolderInput, projectPath);
-    }
+    const project = $selectedProject;
+    if (project?.format !== "scenes" || !sceneFolderInput || !codexFolderInput) return;
+    const root = projectFolderPath(project, app.vault) || vaultParentPath(project.vaultPath);
+    const scenes = new FolderSuggest(app, sceneFolderInput, root);
+    const codex = new FolderSuggest(app, codexFolderInput, root);
+    return () => {
+      scenes.close();
+      codex.close();
+    };
   });
 
-  async function sceneFolderChanged(event: Event) {
-    const newFolder = (event.target as HTMLInputElement).value;
-    if (newFolder.length <= 0 || !$selectedProject) {
+  async function folderChanged(event: FocusEvent, kind: "scenes" | "codex") {
+    const project = $selectedProject;
+    if (project?.format !== "scenes") return;
+
+    const input = event.currentTarget as HTMLInputElement;
+    const root = projectFolderPath(project, app.vault) || vaultParentPath(project.vaultPath);
+    const fallback = kind === "scenes" ? DEFAULT_SCENE_FOLDER : DEFAULT_CODEX_FOLDER;
+    const raw = input.value.trim().replaceAll("\\", "/") || fallback;
+    const path = resolveRelativeVaultPath(root, raw);
+    if (!path || (raw.startsWith("/") && raw !== "/")) {
+      folderErrors[kind] = "Enter a folder path relative to the project folder.";
       return;
     }
-    const root = app.vault.getAbstractFileByPath($selectedProject.vaultPath)!
-      .parent!.path;
-    const path = normalizePath(`${root}/${newFolder}`);
-    const exists = await app.vault.adapter.exists(path);
-    if (exists) {
-      updateScenesProject($selectedProjectPath!, (p) => {
-        p.sceneFolder = newFolder;
-      });
-    }
-  }
+    const relative = relativeVaultPath(root, path);
+    const previous = kind === "scenes" ? project.sceneFolder : project.codexFolder ?? DEFAULT_CODEX_FOLDER;
 
-  let sceneTemplateInput: HTMLInputElement | null = $state(null);
-  onMount(() => {
-    if (sceneTemplateInput && $selectedProject!.format === "scenes") {
-      new FileSuggest(app, sceneTemplateInput);
-    }
-  });
-  async function sceneTemplateChanged(event: Event) {
-    let newTemplate: string | null = (event.target as HTMLInputElement).value;
-    if (!$selectedProject) {
+    folderErrors[kind] = "";
+    input.value = relative;
+    const changed = resolveRelativeVaultPath(root, previous) !== path;
+    if (!changed && kind === "scenes") return;
+
+    if (kind === "scenes" && project.scenes.some(({ title }) =>
+      !(app.vault.getAbstractFileByPath(scenePathForFolder(title, path)) instanceof TFile),
+    )) {
+      folderErrors[kind] = "Choose a folder containing every scene in this manuscript.";
       return;
     }
-    let exists = true;
-    if (newTemplate.length <= 0) {
-      newTemplate = null;
-    } else {
-      exists = await app.vault.adapter.exists(newTemplate);
-    }
 
-    if (exists) {
-      updateScenesProject($selectedProjectPath!, (p) => {
-        p.sceneTemplate = newTemplate;
-      });
+    try {
+      await (kind === "codex"
+        ? ensureCodexFolders(app.vault, path)
+        : ensureVaultFolder(app.vault, path));
+    } catch (error) {
+      console.error("[Inkwell] Could not prepare project folder", error);
+      folderErrors[kind] = "Could not use this folder. Choose another folder.";
+      return;
     }
+    if (!changed) return;
+
+    const folder = path === "/" ? app.vault.getRoot() : app.vault.getAbstractFileByPath(path);
+    const names = folder instanceof TFolder
+      ? folder.children
+          .filter((file): file is TFile => file instanceof TFile && file.extension === "md" &&
+            file.path !== project.vaultPath)
+          .map((file) => file.basename)
+      : [];
+    updateScenesProject(project.vaultPath, (current) => {
+      if (kind === "scenes") {
+        current.sceneFolder = relative;
+        current.unknownFiles = unlistedSceneNames(names, current.scenes, current.ignoredFiles);
+      } else {
+        current.codexFolder = relative;
+      }
+    });
   }
 
   // ---- Overview ----
@@ -124,10 +153,8 @@
   });
   const EBOOK_FIELD_TOTAL = EBOOK_STRING_KEYS.length + 2;
 
-  const sceneFolderHelp =
-    "Changing the scene folder does not move scenes. Move them in your vault first, then update this.";
-  const sceneTemplateHelp =
-    "Used as a template when creating new scenes. Templater or the core Templates plugin will process it if enabled.";
+  const sceneFolderHelp = "Relative to the project folder. Use . for the project folder itself.";
+  const codexFolderHelp = "Relative to the project folder. Contains Assets, Characters, Locations, and Timeline.";
 </script>
 
 <div class="inkwell-project">
@@ -165,28 +192,34 @@
         <input
           id="inkwell-project-scene-folder"
           type="text"
-          value={$selectedProject.sceneFolder}
+          value={$selectedProject.sceneFolder === "/" ? "." : $selectedProject.sceneFolder}
           bind:this={sceneFolderInput}
-          onblur={sceneFolderChanged}
+          onblur={(event) => folderChanged(event, "scenes")}
+          aria-invalid={!!folderErrors.scenes}
+          aria-describedby={folderErrors.scenes ? "inkwell-scene-folder-error" : undefined}
         />
+        {#if folderErrors.scenes}
+          <p class="inkwell-story-error" id="inkwell-scene-folder-error" role="alert">{folderErrors.scenes}</p>
+        {/if}
       </div>
 
       <div class="field">
-        <label for="inkwell-project-scene-template">
-          Scene template
-          <span
-            class="inkwell-help"
-            title={sceneTemplateHelp}
-            aria-label={sceneTemplateHelp}>ⓘ</span
-          >
+        <label for="inkwell-project-codex-folder">
+          Codex folder
+          <span class="inkwell-help" title={codexFolderHelp} aria-label={codexFolderHelp}>ⓘ</span>
         </label>
         <input
-          id="inkwell-project-scene-template"
+          id="inkwell-project-codex-folder"
           type="text"
-          value={$selectedProject.sceneTemplate}
-          bind:this={sceneTemplateInput}
-          onblur={sceneTemplateChanged}
+          value={$selectedProject.codexFolder ?? DEFAULT_CODEX_FOLDER}
+          bind:this={codexFolderInput}
+          onblur={(event) => folderChanged(event, "codex")}
+          aria-invalid={!!folderErrors.codex}
+          aria-describedby={folderErrors.codex ? "inkwell-codex-folder-error" : undefined}
         />
+        {#if folderErrors.codex}
+          <p class="inkwell-story-error" id="inkwell-codex-folder-error" role="alert">{folderErrors.codex}</p>
+        {/if}
       </div>
     {/if}
 
@@ -200,10 +233,21 @@
       >
       <span class="inkwell-ebook-launcher-chevron">›</span>
     </button>
+    {#if !Platform.isMobile}
+      <button type="button" class="mod-cta project-compile"
+        onclick={() => app.commands.executeCommandById("inkwell:inkwell-open-compile-builder")}>
+        <Icon iconName="package" /> Open Compile builder
+      </button>
+    {/if}
   {/if}
 </div>
 
 <style>
+  .project-compile {
+    width: 100%;
+    gap: var(--size-4-2);
+  }
+
   .inkwell-project {
     display: flex;
     flex-direction: column;

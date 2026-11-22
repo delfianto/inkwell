@@ -27,10 +27,19 @@
   import { Keymap, Notice, type PaneType, Platform, TFile } from "obsidian";
   import Disclosure from "../components/Disclosure.svelte";
   import { enrichScenes } from "./scene-items";
+  import { isCodexPath } from "src/model/codex";
   import type Sortable from "sortablejs";
   import SortableList from "../sortable/SortableList.svelte";
 
   const app = useApp();
+  const unlisted = $derived.by(() => {
+    const project = $selectedProject;
+    if (project?.format !== "scenes") return [];
+    return project.unknownFiles.filter((name) => {
+      const path = scenePath(name, project, app.vault);
+      return path !== project.sceneTemplate && path !== $pluginSettings.sceneTemplate && !isCodexPath(path, project);
+    });
+  });
 
   let currentProjectIndex = $state(-1);
   $effect(() => {
@@ -276,9 +285,9 @@
   function doWithAll(action: "add" | "ignore") {
     if (!$selectedProject) return;
     if (action === "add") {
-      addAll();
+      addAll(unlisted);
     } else {
-      ignoreAll();
+      ignoreAll(unlisted);
     }
   }
 
@@ -417,14 +426,11 @@
       {/snippet}
     </SortableList>
   </div>
-  {#if $selectedProject && $selectedProject.format === "scenes" && $selectedProject.unknownFiles.length > 0}
+  {#if unlisted.length > 0}
     <div id="inkwell-unknown-files-wizard">
       <div class="inkwell-unknown-inner">
         <p class="inkwell-unknown-explanation">
-          Inkwell has found {$selectedProject.unknownFiles.length} new file{$selectedProject
-            .unknownFiles.length === 1
-            ? ""
-            : "s"} in your scenes folder.
+          Inkwell has found {unlisted.length} new file{unlisted.length === 1 ? "" : "s"} in your scenes folder.
         </p>
         <div>
           <button class="inkwell-unknown-add" onclick={() => doWithAll("add")}
@@ -436,7 +442,7 @@
           >
         </div>
         <ul>
-          {#each $selectedProject.unknownFiles as fileName}
+          {#each unlisted as fileName (fileName)}
             <li>
               <div class="inkwell-unknown-file">
                 <span>{fileName}</span>

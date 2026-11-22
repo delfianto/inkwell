@@ -1,14 +1,22 @@
-import { type App, Modal, type TFolder } from "obsidian";
-import { type MultipleSceneProject, type Project, type SingleSceneProject } from "src/model/types";
+import { type App, Modal, TFolder } from "obsidian";
+import {
+  DEFAULT_CODEX_FOLDER,
+  DEFAULT_SCENE_FOLDER,
+  insertProjectFrontmatter,
+  type MultipleSceneProject,
+  type Project,
+  selectedProjectPath,
+  type SingleSceneProject,
+} from "src/model";
+import { mount, unmount } from "svelte";
 import { appContext } from "src/view/utils";
-import { insertProjectFrontmatter } from "src/model/project-utils";
-import { mount } from "svelte";
 import NewProjectModalContent from "./NewProjectModal.svelte";
-import { selectedProjectPath } from "src/model/stores";
+import { ProjectFolderPicker } from "./ProjectFolderPicker";
 import { selectedTab } from "src/view/stores";
 
 export default class NewProjectModal extends Modal {
   private parent: TFolder;
+  private component: ReturnType<typeof mount> | null = null;
 
   constructor(app: App, parent: TFolder) {
     super(app);
@@ -24,17 +32,29 @@ export default class NewProjectModal extends Modal {
 
     const context = appContext(this);
     context.set("close", () => this.close());
+    context.set("chooseFolder", (select: (folder: TFolder) => void) => {
+      new ProjectFolderPicker(this.app, select).open();
+    });
     context.set(
       "createProject",
       async (format: "scenes" | "single", title: string, path: string) => {
+        const segments = path.split("/");
+        const destination = segments.slice(0, format === "scenes" ? -2 : -1).join("/");
+        if (
+          destination &&
+          !(this.app.vault.getAbstractFileByPath(destination) instanceof TFolder)
+        ) {
+          throw new Error("This folder is no longer available. Choose another folder.");
+        }
         const exists = await this.app.vault.adapter.exists(path);
         if (exists) {
-          console.log(`[Inkwell] Cannot create project at ${path}, already exists.`);
-          return;
+          throw new Error(
+            "A note already exists at this path. Choose a different title or folder.",
+          );
         }
 
-        const parentPath = path.split("/").slice(0, -1).join("/");
-        if (!(await this.app.vault.adapter.exists(parentPath))) {
+        const parentPath = segments.slice(0, -1).join("/");
+        if (parentPath && !(await this.app.vault.adapter.exists(parentPath))) {
           await this.app.vault.createFolder(parentPath);
         }
 
@@ -46,7 +66,8 @@ export default class NewProjectModal extends Modal {
               titleInFrontmatter: true,
               vaultPath: path,
               workflow: null,
-              sceneFolder: "/",
+              sceneFolder: DEFAULT_SCENE_FOLDER,
+              codexFolder: DEFAULT_CODEX_FOLDER,
               scenes: [],
               ignoredFiles: [],
               unknownFiles: [],
@@ -76,7 +97,7 @@ export default class NewProjectModal extends Modal {
       },
     );
 
-    mount(NewProjectModalContent, {
+    this.component = mount(NewProjectModalContent, {
       target: entrypoint,
       context,
       props: {
@@ -86,6 +107,10 @@ export default class NewProjectModal extends Modal {
   }
 
   override onClose(): void {
+    if (this.component) {
+      void unmount(this.component);
+      this.component = null;
+    }
     const { contentEl } = this;
     contentEl.empty();
   }

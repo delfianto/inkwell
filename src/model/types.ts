@@ -41,10 +41,14 @@ export interface MultipleSceneProject {
   vaultPath: string;
   workflow: string | null;
   sceneFolder: string;
+  /** Relative to the project index directory. */
+  codexFolder?: string;
   scenes: IndentedScene[];
   ignoredFiles: string[] | null;
   unknownFiles: string[];
   sceneTemplate: string | null;
+  sceneTemplateMode?: "chapter";
+  storyTime?: "calendar";
   ebook: EbookMetadata;
 }
 
@@ -77,7 +81,7 @@ export interface SerializedWorkflow {
 export type ProjectWordCounts = Record<string, Record<string, number> | number>;
 
 /** How the Scenes tab renders its scene list. */
-export type SceneViewMode = "list" | "cards" | "outline";
+export type SceneViewMode = "list" | "cards" | "outline" | "timeline";
 
 export interface InkwellPluginSettings {
   version: number;
@@ -86,6 +90,7 @@ export interface InkwellPluginSettings {
   numberScenes: boolean;
   sceneViewMode: SceneViewMode;
   sceneTemplate: string | null;
+  writingProjectsFolder: string | null;
   waitForSync: boolean;
   fallbackWaitEnabled: boolean;
   fallbackWaitTime: number;
@@ -98,6 +103,7 @@ export const DEFAULT_SETTINGS: InkwellPluginSettings = {
   numberScenes: false,
   sceneViewMode: "list",
   sceneTemplate: null,
+  writingProjectsFolder: null,
   waitForSync: false,
   fallbackWaitEnabled: true,
   fallbackWaitTime: 5,
@@ -109,6 +115,7 @@ export const TRACKED_SETTINGS_PATHS: (keyof InkwellPluginSettings)[] = [
   "numberScenes",
   "sceneViewMode",
   "sceneTemplate",
+  "writingProjectsFolder",
   "waitForSync",
   "fallbackWaitEnabled",
   "fallbackWaitTime",
@@ -118,6 +125,7 @@ export const PASSTHROUGH_SAVE_SETTINGS_PATHS: (keyof InkwellPluginSettings)[] = 
   "numberScenes",
   "sceneViewMode",
   "sceneTemplate",
+  "writingProjectsFolder",
   "waitForSync",
   "fallbackWaitEnabled",
   "fallbackWaitTime",

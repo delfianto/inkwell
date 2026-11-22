@@ -1,5 +1,8 @@
 import { type MultipleSceneProject, type Project } from "./types";
 import { normalizePath, type Vault } from "obsidian";
+import { resolveRelativeVaultPath, vaultParentPath } from "src/lib/path";
+
+export const DEFAULT_SCENE_FOLDER = "Scenes";
 
 export function projectFolderPath(project: Project, vault: Vault): string {
   const file = vault.getAbstractFileByPath(project.vaultPath);
@@ -7,8 +10,8 @@ export function projectFolderPath(project: Project, vault: Vault): string {
 }
 
 export function sceneFolderPath(project: MultipleSceneProject, vault: Vault): string {
-  const root = projectFolderPath(project, vault);
-  return normalizePath(`${root}/${project.sceneFolder}`);
+  const root = projectFolderPath(project, vault) || vaultParentPath(project.vaultPath);
+  return resolveRelativeVaultPath(root, project.sceneFolder) ?? root;
 }
 
 export function scenePathForFolder(sceneName: string, folderPath: string): string {
@@ -29,12 +32,10 @@ export interface SceneFinding {
 export function findScene(path: string, projects: Project[]): SceneFinding | null {
   for (const project of projects) {
     if (project.format === "scenes") {
-      const parentPath = project.vaultPath.split("/").slice(0, -1).join("/");
-      if (parentPath !== "" && !parentPath) {
-        continue;
-      }
+      const parentPath = vaultParentPath(project.vaultPath);
+      const folderPath = resolveRelativeVaultPath(parentPath, project.sceneFolder) ?? parentPath;
       const index = project.scenes.findIndex(
-        (s) => normalizePath(`${parentPath}/${project.sceneFolder}/${s.title}.md`) === path,
+        (s) => scenePathForFolder(s.title, folderPath) === path,
       );
       if (index !== -1) {
         return { project, index, currentIndent: project.scenes[index].indent };
@@ -70,9 +71,9 @@ export function scenePathForLocation(
 ): string | null {
   for (const project of projects) {
     if (project.format === "scenes") {
-      const root = projectFolderPath(project, vault);
+      const folderPath = sceneFolderPath(project, vault);
       const index = project.scenes.findIndex(
-        (s) => normalizePath(`${root}/${project.sceneFolder}/${s.title}.md`) === path,
+        (s) => scenePathForFolder(s.title, folderPath) === path,
       );
       if (index !== -1) {
         if (location.position === "next" && index < project.scenes.length - 1) {
@@ -82,11 +83,11 @@ export function scenePathForLocation(
               .slice(index + 1)
               .find((s) => s.indent === indent);
             if (nextSceneAtIndent) {
-              return normalizePath(`${root}/${project.sceneFolder}/${nextSceneAtIndent.title}.md`);
+              return scenePathForFolder(nextSceneAtIndent.title, folderPath);
             }
           } else {
             const nextScene = project.scenes[index + 1];
-            return normalizePath(`${root}/${project.sceneFolder}/${nextScene.title}.md`);
+            return scenePathForFolder(nextScene.title, folderPath);
           }
         } else if (location.position === "previous" && index > 0) {
           if (location.maintainIndent) {
@@ -95,13 +96,11 @@ export function scenePathForLocation(
               .slice(0, index)
               .find((s) => s.indent === indent);
             if (previousSceneAtIndent) {
-              return normalizePath(
-                `${root}/${project.sceneFolder}/${previousSceneAtIndent.title}.md`,
-              );
+              return scenePathForFolder(previousSceneAtIndent.title, folderPath);
             }
           } else {
             const previousScene = project.scenes[index - 1];
-            return normalizePath(`${root}/${project.sceneFolder}/${previousScene.title}.md`);
+            return scenePathForFolder(previousScene.title, folderPath);
           }
         }
       }

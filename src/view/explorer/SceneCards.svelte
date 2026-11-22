@@ -146,6 +146,9 @@
         title={scene.displayName !== scene.name ? scene.name : undefined}
       >{scene.path === editingPath ? scene.name : scene.displayName}</span>
     </div>
+    {#if scene.story.subtitle}
+      <p class="inkwell-card-subtitle">{scene.story.subtitle}</p>
+    {/if}
     {#if scene.synopsis}
       <p class="inkwell-card-synopsis">{scene.synopsis}</p>
     {/if}
@@ -174,28 +177,34 @@
     {#each acts as act (act.header.name)}
       {@const collapsed = collapsedActs.contains(act.header.name)}
       <div class="inkwell-act">
-        <div class="inkwell-act-header">
-          <button
-            type="button"
-            class="inkwell-act-toggle"
-            onclick={() => toggleAct(act.header.name)}
-          >
-            <Disclosure {collapsed} />
-            <span class="inkwell-act-title">{act.header.displayName}</span>
-          </button>
-          <span class="inkwell-act-meta">
-            {act.children.length} scene{act.children.length === 1 ? "" : "s"}
-            {#if actWordCount(act.children) > 0}
-              · {actWordCount(act.children).toLocaleString()} w
-            {/if}
-          </span>
-        </div>
-        {#if !collapsed && act.children.length > 0}
+        {#if act.children.length === 0}
           <div class="inkwell-card-grid">
-            {#each act.children as scene (scene.name)}
-              {@render card(scene)}
-            {/each}
+            {@render card(act.header)}
           </div>
+        {:else}
+          <div class="inkwell-act-header">
+            <button
+              type="button"
+              class="inkwell-act-toggle"
+              onclick={() => toggleAct(act.header.name)}
+            >
+              <Disclosure {collapsed} />
+              <span class="inkwell-act-title">{act.header.displayName}</span>
+            </button>
+            <span class="inkwell-act-meta">
+              {act.children.length} scene{act.children.length === 1 ? "" : "s"}
+              {#if actWordCount(act.children) > 0}
+                · {actWordCount(act.children).toLocaleString()} w
+              {/if}
+            </span>
+          </div>
+          {#if !collapsed}
+            <div class="inkwell-card-grid">
+              {#each act.children as scene (scene.name)}
+                {@render card(scene)}
+              {/each}
+            </div>
+          {/if}
         {/if}
       </div>
     {/each}
@@ -316,12 +325,15 @@
     white-space: normal;
   }
 
-  .inkwell-card-synopsis {
-    flex: 1;
+  .inkwell-card-synopsis, .inkwell-card-subtitle {
     margin: 0;
     color: var(--text-muted);
     font-size: var(--font-ui-smaller);
     line-height: var(--line-height-tight);
+  }
+
+  .inkwell-card-synopsis {
+    flex: 1;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;

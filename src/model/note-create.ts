@@ -1,4 +1,13 @@
-import { type App, type TFile } from "obsidian";
+import { type App, type TFile, TFolder, type Vault } from "obsidian";
+
+export async function ensureVaultFolder(vault: Vault, path: string): Promise<void> {
+  if (path === "/" || vault.getAbstractFileByPath(path) instanceof TFolder) return;
+  try {
+    await vault.createFolder(path);
+  } catch (error) {
+    if (!(vault.getAbstractFileByPath(path) instanceof TFolder)) throw error;
+  }
+}
 
 /**
  * Creates a note at `path` with a given `template` if a templating plugin is enabled.

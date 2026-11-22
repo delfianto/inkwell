@@ -1,8 +1,14 @@
-import { type App, PluginSettingTab, Setting } from "obsidian";
+import { type App, normalizePath, PluginSettingTab, Setting, TFile, TFolder } from "obsidian";
+import {
+  CHAPTER_TEMPLATE_PATH,
+  prepareChapterTemplate,
+  TEMPLATES_FOLDER,
+} from "src/model/chapter-template";
 import { get, type Unsubscriber } from "svelte/store";
 import { pluginSettings, userScriptSteps } from "src/model/stores";
 import { FileSuggest } from "./file-suggest";
 import type InkwellPlugin from "../../main";
+import { ProjectFolderPicker } from "../modals/ProjectFolderPicker";
 
 export class InkwellSettingsTab extends PluginSettingTab {
   plugin: InkwellPlugin;
@@ -22,23 +28,39 @@ export class InkwellSettingsTab extends PluginSettingTab {
 
     containerEl.empty();
 
+    const writingFolder = new Setting(containerEl).setName("Writing projects folder");
+    const setFolderDescription = (path: string | null) => {
+      const folder =
+        path === "/"
+          ? this.app.vault.getRoot()
+          : path && this.app.vault.getAbstractFileByPath(path);
+      if (!path) {
+        writingFolder.setDesc("Choose a default folder for new projects.");
+      } else if (folder instanceof TFolder) {
+        writingFolder.setDesc(
+          `New projects go in ${path === "/" ? "the vault root" : path} by default.`,
+        );
+      } else {
+        writingFolder.setDesc(`${path} is missing. Choose a new folder to set a default.`);
+      }
+    };
+    const setFolder = (path: string | null) => {
+      pluginSettings.update((current) => ({ ...current, writingProjectsFolder: path }));
+      setFolderDescription(path);
+    };
+    setFolderDescription(settings.writingProjectsFolder);
+    writingFolder
+      .addButton((button) =>
+        button.setButtonText("Choose folder").onClick(() => {
+          new ProjectFolderPicker(this.app, (folder) =>
+            setFolder(folder.isRoot() ? "/" : folder.path),
+          ).open();
+        }),
+      )
+      .addButton((button) => button.setButtonText("Clear").onClick(() => setFolder(null)));
+
     new Setting(containerEl).setName("Composition").setHeading();
-    new Setting(containerEl).setName("New scene template").addSearch((search) => {
-      new FileSuggest(this.app, search.inputEl);
-      search
-        .setPlaceholder("templates/Scene.md")
-        .setValue(settings.sceneTemplate ?? "")
-        .onChange((v) => {
-          pluginSettings.update((s) => ({
-            ...s,
-            sceneTemplate: v,
-          }));
-        });
-    });
-    containerEl.createEl("p", { cls: "setting-item-description" }, (el) => {
-      el.innerHTML =
-        "This file will be used as a template when creating new scenes via the New Scene… field. If you use a templating plugin (Templater or the core plugin) it will be used to process this template. This setting applies to all projects and can be overridden per-project in the Project > Project Metadata settings in the Inkwell pane.";
-    });
+    this.addSceneTemplateSetting(containerEl);
 
     new Setting(containerEl)
       .setName("Show scene numbers in Scenes tab")
@@ -154,7 +176,71 @@ export class InkwellSettingsTab extends PluginSettingTab {
     });
   }
 
+  private addSceneTemplateSetting(container: HTMLElement): void {
+    const description =
+      "Default for new scenes. Template notes live in the vault’s Templates folder.";
+    const setting = new Setting(container).setName("Scene template").setDesc(description);
+    setting.addSearch((search) => {
+      const suggest = new FileSuggest(this.app, search.inputEl, TEMPLATES_FOLDER);
+      this.unsubscribers.push(() => suggest.close());
+      search
+        .setPlaceholder(CHAPTER_TEMPLATE_PATH)
+        .setValue(get(pluginSettings).sceneTemplate ?? "");
+
+      const setTemplate = (path: string | null) => {
+        pluginSettings.update((current) => ({ ...current, sceneTemplate: path }));
+        search.setValue(path ?? "");
+        setting.setDesc(description);
+      };
+      search.inputEl.addEventListener("blur", () => {
+        const value = search.getValue().trim();
+        if (value === (get(pluginSettings).sceneTemplate ?? "")) {
+          setting.setDesc(description);
+          return;
+        }
+        const path = value ? normalizePath(value) : null;
+        if (
+          path &&
+          (!path.startsWith(`${TEMPLATES_FOLDER}/`) ||
+            !(this.app.vault.getAbstractFileByPath(path) instanceof TFile) ||
+            !path.endsWith(".md"))
+        ) {
+          setting.setDesc("Choose an existing Markdown note in Templates, or clear the field.");
+          return;
+        }
+        setTemplate(path);
+      });
+      setting.addButton((button) =>
+        button.setButtonText("Use Chapter preset").onClick(async () => {
+          button.setDisabled(true);
+          try {
+            setTemplate(await prepareChapterTemplate(this.app));
+          } catch (error) {
+            console.error("[Inkwell] Could not set up Chapter template", error);
+            setting.setDesc("Could not create the Chapter preset. Check the Templates folder.");
+          } finally {
+            button.setDisabled(false);
+          }
+        }),
+      );
+      setting.addExtraButton((button) =>
+        button
+          .setIcon("pencil")
+          .setTooltip("Edit scene template")
+          .onClick(() => {
+            const path = get(pluginSettings).sceneTemplate;
+            if (path && this.app.vault.getAbstractFileByPath(path) instanceof TFile) {
+              void this.app.workspace.openLinkText(path, "/", false);
+            } else {
+              setting.setDesc("Choose a scene template to edit.");
+            }
+          }),
+      );
+    });
+  }
+
   override hide(): void {
     this.unsubscribers.forEach((u) => u());
+    this.unsubscribers = [];
   }
 }

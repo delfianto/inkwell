@@ -1,4 +1,7 @@
-import { type App, TFile, type Vault } from "obsidian";
+import { type App, Notice, TFile, type Vault } from "obsidian";
+import { CHAPTER_TEMPLATE_PATH, createChapterNote } from "./chapter-template";
+import { codexFolderPath, encodeCodexFolder, ensureCodexFolders, isCodexPath } from "./codex";
+import { createNoteWithPotentialTemplate, ensureVaultFolder } from "./note-create";
 import {
   EBOOK_STRING_KEYS,
   type EbookMetadata,
@@ -7,9 +10,8 @@ import {
   type Project,
 } from "./types";
 import { get, type Writable } from "svelte/store";
-import { createNoteWithPotentialTemplate } from "./note-create";
+import { sceneFolderPath, scenePath } from "src/model/scene-navigation";
 import { pluginSettings } from "./stores";
-import { scenePath } from "src/model/scene-navigation";
 
 interface SceneInsertionLocation {
   at: "before" | "after" | "end";
@@ -26,48 +28,72 @@ export interface InsertSceneOptions {
   open: boolean;
 }
 
-export async function createScene(
-  app: App,
-  path: string,
-  project: MultipleSceneProject,
-  open: boolean,
-): Promise<void> {
-  const template = project.sceneTemplate ?? get(pluginSettings).sceneTemplate;
-  const note = await createNoteWithPotentialTemplate(app, path, template);
-  if (note === null) return;
-
-  if (open) {
-    app.workspace.openLinkText(path, "/", false);
-  }
-}
-
-export async function insertScene(options: InsertSceneOptions): Promise<void> {
+export async function insertScene(options: InsertSceneOptions): Promise<boolean> {
   const { app, projectsStore, project, sceneName, vault, location, open } = options;
   const newScenePath = scenePath(sceneName, project, vault);
 
-  if (!newScenePath || !project || project.format !== "scenes") {
-    return;
+  if (vault.getAbstractFileByPath(newScenePath)) {
+    new Notice(
+      isCodexPath(newScenePath, project)
+        ? "A Codex note with that name already exists."
+        : "A note with that name already exists in the scene folder.",
+    );
+    return false;
   }
 
+  const projectPath = project.vaultPath;
+  const relativeTitle =
+    location.relativeTo === null ? undefined : project.scenes[location.relativeTo]?.title;
+  let note: TFile | null;
+  try {
+    const globalTemplate = get(pluginSettings).sceneTemplate;
+    const template = globalTemplate || project.sceneTemplate;
+    const chapterMode = globalTemplate
+      ? globalTemplate === CHAPTER_TEMPLATE_PATH
+      : project.sceneTemplateMode === "chapter";
+    note =
+      chapterMode && template
+        ? await createChapterNote(app, newScenePath, template, sceneName)
+        : await createNoteWithPotentialTemplate(app, newScenePath, template);
+  } catch (error) {
+    console.error("[Inkwell] Could not create scene", error);
+    new Notice("Could not create the scene. Check the scene template in Inkwell settings.");
+    return false;
+  }
+  if (!note) {
+    new Notice("Could not create the scene. Check the name and scene folder.");
+    return false;
+  }
+
+  let added = false;
   projectsStore.update((allProjects) =>
     allProjects.map((p) => {
-      if (p.vaultPath === project.vaultPath && p.format === "scenes") {
-        if (location.at === "end") {
-          p.scenes = [...p.scenes, { title: sceneName, indent: 0 }];
-        } else if (location.relativeTo !== null) {
-          const relativeScene = p.scenes[location.relativeTo];
-          const index = location.at === "before" ? location.relativeTo : location.relativeTo + 1;
-          p.scenes.splice(index, 0, {
-            title: sceneName,
-            indent: relativeScene.indent,
-          });
-        }
+      if (
+        p.vaultPath !== projectPath ||
+        p.format !== "scenes" ||
+        scenePath(sceneName, p, vault) !== newScenePath
+      ) {
+        return p;
       }
-      return p;
+      added = true;
+      if (p.scenes.some((scene) => scene.title === sceneName)) return p;
+      const scenes = [...p.scenes];
+      const anchor = scenes.findIndex((scene) => scene.title === relativeTitle);
+      if (location.at === "end" || anchor === -1) {
+        scenes.push({ title: sceneName, indent: 0 });
+      } else {
+        const index = location.at === "before" ? anchor : anchor + 1;
+        scenes.splice(index, 0, { title: sceneName, indent: scenes[anchor].indent });
+      }
+      return { ...p, scenes, unknownFiles: p.unknownFiles.filter((name) => name !== sceneName) };
     }),
   );
 
-  await createScene(app, newScenePath, project, open);
+  if (!added) {
+    new Notice("The scene note was created, but the project changed before it could be added.");
+  }
+  if (open) await app.workspace.openLinkText(newScenePath, "/", false);
+  return true;
 }
 
 export function setProjectFrontmatter(obj: Record<string, any>, project: Project) {
@@ -99,10 +125,27 @@ export function setProjectFrontmatter(obj: Record<string, any>, project: Project
     } else {
       delete obj["sceneTemplate"];
     }
+    if (project.sceneTemplate && project.sceneTemplateMode === "chapter") {
+      obj["sceneTemplateMode"] = "chapter";
+    } else {
+      delete obj["sceneTemplateMode"];
+    }
+    if (project.storyTime === "calendar") {
+      obj["storyTime"] = "calendar";
+    } else {
+      delete obj["storyTime"];
+    }
     obj["ignoredFiles"] = project.ignoredFiles ?? [];
+    if (project.codexFolder) {
+      obj["codexFolder"] = encodeCodexFolder(project.codexFolder);
+    } else {
+      delete obj["codexFolder"];
+    }
   } else {
     delete obj["sceneFolder"];
     delete obj["sceneTemplate"];
+    delete obj["sceneTemplateMode"];
+    delete obj["storyTime"];
     delete obj["scenes"];
     delete obj["ignoredFiles"];
   }
@@ -252,6 +295,10 @@ export function groupByAct<T extends { indent: number }>(scenes: T[]): SceneGrou
 }
 
 export async function insertProjectFrontmatter(app: App, path: string, project: Project) {
+  if (project.format === "scenes") {
+    await ensureVaultFolder(app.vault, sceneFolderPath(project, app.vault));
+    await ensureCodexFolders(app.vault, codexFolderPath(project));
+  }
   const exists = await app.vault.adapter.exists(path);
   if (!exists) {
     await app.vault.create(path, "");

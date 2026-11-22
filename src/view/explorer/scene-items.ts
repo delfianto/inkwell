@@ -1,6 +1,7 @@
 import { type App, TFile } from "obsidian";
 import { type MultipleSceneProject, type ProjectWordCounts } from "src/model/types";
 import { numberScenes, scenePath } from "src/model";
+import { readSceneStory, readSceneSummary, type SceneStoryDetails } from "src/model/scene-story";
 import { sceneWordCount } from "src/model/scene-stats";
 
 /**
@@ -28,8 +29,9 @@ export interface EnrichedScene {
   status: string | undefined;
   /** Per-scene word count, or undefined if not yet counted. */
   wordCount: number | undefined;
-  /** Front-matter `synopsis` (falling back to `description`), or undefined. */
+  /** Front-matter `summary`, `synopsis`, or `description`. */
   synopsis: string | undefined;
+  story: SceneStoryDetails;
 }
 
 export function enrichScenes(
@@ -40,23 +42,17 @@ export function enrichScenes(
   return numberScenes(project.scenes).map(({ title, indent, numbering }) => {
     const path = scenePath(title, project, app.vault);
     const file = app.vault.getAbstractFileByPath(path);
+    const fm =
+      file instanceof TFile ? app.metadataCache.getFileCache(file)?.frontmatter : undefined;
     let status: string | undefined;
     let displayName = title;
-    let synopsis: string | undefined;
-    if (file instanceof TFile) {
-      const fm = app.metadataCache.getFileCache(file)?.frontmatter;
-      if (fm) {
-        if (fm["status"]) {
-          status = `${fm["status"]}`;
-        }
-        const fmTitle = fm["title"];
-        if (typeof fmTitle === "string" && fmTitle.trim().length > 0) {
-          displayName = fmTitle.trim();
-        }
-        const rawSynopsis = fm["synopsis"] ?? fm["description"];
-        if (typeof rawSynopsis === "string" && rawSynopsis.trim().length > 0) {
-          synopsis = rawSynopsis.trim();
-        }
+    if (fm) {
+      if (fm["status"]) {
+        status = `${fm["status"]}`;
+      }
+      const fmTitle = fm["title"];
+      if (typeof fmTitle === "string" && fmTitle.trim().length > 0) {
+        displayName = fmTitle.trim();
       }
     }
     return {
@@ -67,7 +63,8 @@ export function enrichScenes(
       numbering,
       status,
       wordCount: sceneWordCount(wordCounts, project, title),
-      synopsis,
+      synopsis: readSceneSummary(fm),
+      story: readSceneStory(fm),
     };
   });
 }

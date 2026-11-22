@@ -54,6 +54,10 @@
           {/each}
         </select>
       </div>
+      <button type="button" class="inkwell-new-project-button" title="New project" aria-label="New project"
+        onclick={newProject}>
+        <Icon iconName="plus" />
+      </button>
     </div>
     {#if $selectedProject}
       <button type="button" class="current-project-path" onclick={(e) => onProjectClick(e)}>
@@ -79,6 +83,21 @@
 </div>
 
 <style>
+  #project-picker {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--size-4-1);
+  }
+
+  .inkwell-new-project-button {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: var(--input-height);
+    padding: 0;
+  }
+
   #project-picker-container {
     flex-shrink: 0;
     margin-bottom: 0;

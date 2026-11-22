@@ -14,6 +14,28 @@
   --inkwell-status-scrap: #f0616d;
 }
 
+.inkwell-new-codex {
+  display: grid;
+  gap: var(--size-4-3);
+  justify-items: start;
+}
+
+.inkwell-new-codex label {
+  display: grid;
+  gap: var(--size-4-1);
+  width: 100%;
+}
+
+.inkwell-story-error {
+  margin: 0;
+  color: var(--text-error);
+  font-size: var(--font-ui-small);
+}
+
+.inkwell-story-error:empty {
+  display: none;
+}
+
 /* Scene status bullet. The element is rendered wherever a scene is listed
    (List / Cards / Outline); color is driven by the nearest [data-scene-status]
    ancestor. Matching is case-insensitive; an unknown or absent status keeps the
@@ -135,6 +157,24 @@ body.inkwell-classic-scrollbars .inkwell-explorer .tab-panel-container::-webkit-
 
 .modal.inkwell-ebook-modal {
   width: min(680px, 92vw);
+}
+
+.modal.inkwell-scene-details-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(880px, 94vw);
+  max-width: 94vw;
+  height: min(680px, 90vh);
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.modal.inkwell-scene-details-modal .modal-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .inkwell-settings-user-steps {

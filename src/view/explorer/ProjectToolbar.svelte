@@ -1,144 +1,191 @@
 <script lang="ts">
-  import { newSceneFieldVisible, sceneViewMode, selectedTab } from "../stores";
+  import { activeFile, newSceneFieldVisible, sceneViewMode } from "../stores";
+  import { findScene } from "src/model/scene-navigation";
   import Icon from "../components/Icon.svelte";
-  import { Platform } from "obsidian";
+  import { Menu } from "obsidian";
+  import { SceneDetailsModal } from "../modals/SceneDetailsModal";
   import { type SceneViewMode } from "src/model/types";
   import { selectedProject } from "src/model/stores";
   import { useApp } from "../utils";
 
   const app = useApp();
-
-  const isScenes = $derived($selectedProject?.format === "scenes");
-  const showCompile = $derived(!Platform.isMobile);
-
-  const viewModes: { id: SceneViewMode; label: string; icon: string }[] = [
-    { id: "list", label: "List", icon: "list" },
-    { id: "cards", label: "Cards", icon: "layout-grid" },
-    { id: "outline", label: "Outline", icon: "list-tree" },
+  const { onCodex }: { onCodex: (path?: string) => void } = $props();
+  const activeScenePath = $derived(
+    $selectedProject && $activeFile && findScene($activeFile.path, [$selectedProject])
+      ? $activeFile.path
+      : null,
+  );
+  const viewModes: { id: SceneViewMode; label: string }[] = [
+    { id: "list", label: "List" },
+    { id: "cards", label: "Cards" },
+    { id: "outline", label: "Outline" },
+    { id: "timeline", label: "Timeline" },
   ];
+  const viewLabel = $derived(viewModes.find((view) => view.id === $sceneViewMode)?.label ?? "List");
+  let viewMenuOpen = $state(false);
 
-  function setView(mode: SceneViewMode) {
-    sceneViewMode.set(mode);
-    selectedTab.set("Scenes");
+  function openViewMenu(event: MouseEvent & { currentTarget: HTMLButtonElement }) {
+    const { currentTarget: button } = event;
+    const menu = new Menu();
+    for (const mode of viewModes) {
+      menu.addItem((item) => {
+        item.setTitle(mode.label)
+          .setChecked($sceneViewMode === mode.id)
+          .onClick(() => sceneViewMode.set(mode.id));
+      });
+    }
+    menu.onHide(() => (viewMenuOpen = false));
+    const bounds = button.getBoundingClientRect();
+    viewMenuOpen = true;
+    menu.showAtPosition({ x: bounds.left, y: bounds.bottom + 4 }, button.ownerDocument);
   }
 
-  function newScene() {
-    selectedTab.set("Scenes");
-    newSceneFieldVisible.set(true);
-  }
-
-  function openCompile() {
-    app.commands.executeCommandById("inkwell:inkwell-open-compile-builder");
+  function openSceneDetails() {
+    const project = $selectedProject;
+    const file = app.workspace.getActiveFile();
+    if (project?.format !== "scenes" || !file || !findScene(file.path, [project])) return;
+    new SceneDetailsModal(app, file, project, onCodex).open();
   }
 </script>
 
 <div class="inkwell-toolbar">
-  {#if isScenes}
-    <button
-      type="button"
-      class="inkwell-toolbar-btn"
-      title="New scene"
-      aria-label="New scene"
-      onclick={newScene}
-    >
-      <Icon iconName="file-plus" />
-    </button>
-
-    <div class="inkwell-toolbar-group" role="tablist" aria-label="Scene view">
-      {#each viewModes as mode}
-        <button
-          type="button"
-          role="tab"
-          class="inkwell-toolbar-btn"
-          class:active={$sceneViewMode === mode.id}
-          aria-selected={$sceneViewMode === mode.id}
-          title={`${mode.label} view`}
-          aria-label={`${mode.label} view`}
-          onclick={() => setView(mode.id)}
-        >
-          <Icon iconName={mode.icon} />
-        </button>
-      {/each}
-    </div>
-  {/if}
-
-  <span class="inkwell-toolbar-spacer"></span>
-
-  {#if showCompile}
-    <button
-      type="button"
-      class="inkwell-toolbar-btn inkwell-toolbar-compile"
-      title="Open compile builder"
-      aria-label="Open compile builder"
-      onclick={openCompile}
-    >
-      <Icon iconName="package" />
-    </button>
-  {/if}
+  <button
+    type="button"
+    class="scene-action scene-view"
+    title="Scene view"
+    aria-label="Scene view, {viewLabel}"
+    aria-haspopup="menu"
+    aria-expanded={viewMenuOpen}
+    onclick={openViewMenu}
+  >
+    <span class="view-label">{viewLabel}</span>
+    <Icon iconName="chevron-down" />
+  </button>
+  <button
+    type="button"
+    class="scene-action scene-details"
+    disabled={!activeScenePath}
+    aria-label="Scene details"
+    title={activeScenePath ? "Scene details" : "Open a scene to edit its details"}
+    onclick={openSceneDetails}
+  >
+    <span class="details-icon"><Icon iconName="list-checks" /></span>
+    <span class="details-label">Details</span>
+    <span class="details-full-label">Scene details</span>
+  </button>
+  <button
+    type="button"
+    class="scene-action"
+    title="New scene"
+    aria-label="New scene"
+    onclick={() => newSceneFieldVisible.set(true)}
+  >
+    <span class="action-icon"><Icon iconName="file-plus" /></span>
+    <span class="action-label">New scene</span>
+  </button>
 </div>
 
 <style>
   .inkwell-toolbar {
     display: flex;
     align-items: center;
-    gap: var(--size-4-2);
+    justify-content: flex-end;
+    gap: var(--size-4-1);
     padding: var(--size-4-2);
     flex-shrink: 0;
+    container-type: inline-size;
+    --inkwell-action-size: max(32px, var(--input-height, 30px));
   }
 
-  .inkwell-toolbar-spacer {
-    flex: 1;
-  }
-
-  /* The three view modes cluster tighter than the toolbar's own gap. */
-  .inkwell-toolbar-group {
-    display: flex;
-    gap: var(--size-2-1);
-  }
-
-  .inkwell-toolbar-btn {
+  .scene-action {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: var(--size-4-7);
-    height: var(--size-4-7);
-    padding: 0;
-    background: none;
-    border: none;
-    box-shadow: none;
+    gap: var(--size-4-1);
+    flex-shrink: 0;
+    height: var(--inkwell-action-size);
+    min-width: var(--inkwell-action-size);
+    padding-inline: var(--size-4-2);
+    border: 1px solid var(--background-modifier-border);
     border-radius: var(--radius-s);
-    color: var(--text-muted);
-    cursor: pointer;
+    background: var(--interactive-normal);
+    box-shadow: none;
+    font-size: var(--font-ui-smaller);
+    white-space: nowrap;
   }
 
-  .inkwell-toolbar-btn :global(svg) {
+  .scene-action:hover:not(:disabled), .scene-action[aria-expanded="true"] {
+    background: var(--interactive-hover);
+  }
+
+  .scene-action:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: -2px;
+  }
+
+  .scene-action :global(svg) {
     width: var(--icon-s);
     height: var(--icon-s);
   }
 
-  .inkwell-toolbar-btn:hover {
-    color: var(--text-normal);
-    background: var(--background-modifier-hover);
+  .scene-view {
+    flex-shrink: 1;
+    margin-inline-end: auto;
   }
 
-  .inkwell-toolbar-btn:focus,
-  .inkwell-toolbar-btn:focus-visible {
-    box-shadow: none;
+  .view-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  /* Active view mode: a subtle pill with an accent-colored icon — not a
-     heavy filled block. */
-  .inkwell-toolbar-group .inkwell-toolbar-btn.active {
-    color: var(--text-accent);
-    background: var(--background-secondary-alt);
+  .action-label, .details-icon, .details-full-label {
+    display: none;
   }
 
-  .inkwell-toolbar-compile {
-    color: var(--text-accent);
+  @container (min-width: 220px) {
+    .scene-action {
+      padding-inline: var(--size-4-1);
+    }
+
+    .action-icon {
+      display: none;
+    }
+
+    .action-label {
+      display: inline;
+    }
   }
 
-  .inkwell-toolbar-compile:hover {
-    color: var(--text-accent);
-    background: var(--background-modifier-hover);
+  @container (min-width: 310px) {
+    .scene-action {
+      padding-inline: var(--size-4-2);
+    }
+  }
+
+  @container (min-width: 250px) {
+    .details-label {
+      display: none;
+    }
+
+    .details-full-label {
+      display: inline;
+    }
+  }
+
+  @container (max-width: 205px) {
+    .details-label {
+      display: none;
+    }
+
+    .details-icon {
+      display: flex;
+    }
+  }
+
+  @media (pointer: coarse) {
+    .inkwell-toolbar {
+      --inkwell-action-size: max(40px, var(--input-height, 30px));
+    }
   }
 </style>

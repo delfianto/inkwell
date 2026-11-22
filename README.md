@@ -18,6 +18,8 @@ This is a personal project, built to scratch my own writing setup and maintained
 - **Flat frontmatter schema** — every project key lives at the top level of `Index.md` so Obsidian's Properties UI can edit it without flattening or losing structure.
 - **eBook metadata first-class** — `author`, `language`, `identifier`, `description`, `cover`, `publisher`, `pubdate`, `rights`, `subjects`, `series`, `seriesIndex` live alongside `title` / `workflow` / `scenes`. An EPUB-producing compile step can read them directly; no sidecar file.
 - **Scene display labels** — the Scenes tab uses each scene file's `frontmatter.title` as its row label (live-updating), falling back to the filename. Lets you name files concisely (`ch01-s02.md`) while displaying a friendlier title.
+- **Codex and timeline** — multi-scene projects can link scenes to Markdown character and location notes. Browse each entry's appearances and switch between manuscript order and story order in the Scenes tab.
+- **Chapter preset** — create chapters with editable YAML defaults, a title filled from scene creation, and a Timeline that can sort by start date. See [Chapter preset](./docs/interface.md#chapter-preset).
 - **Redesigned interface** — nearly every writing surface was reimplemented: three Scenes views (List / Cards / Outline) with colour-coded status and per-scene word counts, a lean Project tab, an eBook metadata modal, an action-first New Project modal, and a full-pane Compile builder. See [A redesigned interface](#a-redesigned-interface).
 - The full Longform workflow is intact underneath: a sidebar pane, reorderable nested scene list, per-project/per-scene word counts, compile workflows, single-scene and multi-scene projects, and multiple drafts grouped by title. Writing-session goals and the status-bar word count have been removed — Obsidian's built-in word-count statistic covers the latter.
 
@@ -158,7 +160,7 @@ Inkwell attaches the `.inkwell-leaf` CSS class to any pane editing a scene or in
 ## Troubleshooting
 
 > [!IMPORTANT]
-> **Inkwell never alters the contents of your scene notes.** The only file it rewrites is each project's `Index.md`. Scene files are read-only from the plugin's perspective.
+> **Scene details** saves the story properties you edit in a scene's frontmatter. Scene prose and other properties are preserved.
 
 If a project disappears from the sidebar after you edit its `Index.md`, the frontmatter no longer matches the schema — most often a missing top-level `inkwell: scenes` (or `single`). Either fix it by hand or restart Obsidian. Inkwell recomputes projects from frontmatter on each load and never deletes files based on frontmatter state.
 

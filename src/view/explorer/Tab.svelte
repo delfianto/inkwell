@@ -5,8 +5,10 @@
 </script>
 
 <button
+  type="button"
   class="tab-button"
   class:selected={$selectedTab === tab}
+  aria-pressed={$selectedTab === tab}
   onclick={() => selectedTab.set(tab)}
 >
   <span class="tab-label">{tab}</span>

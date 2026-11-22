@@ -105,6 +105,16 @@ export default class InkwellPlugin extends Plugin {
 
     await this.loadSettings();
     this.addSettingTab(new InkwellSettingsTab(this.app, this));
+    this.registerEvent(
+      this.app.vault.on("rename", (file, oldPath) => {
+        if (!(file instanceof TFolder)) return;
+        pluginSettings.update((settings) => {
+          const path = settings.writingProjectsFolder;
+          if (!path || (path !== oldPath && !path.startsWith(`${oldPath}/`))) return settings;
+          return { ...settings, writingProjectsFolder: file.path + path.slice(oldPath.length) };
+        });
+      }),
+    );
 
     // Persist the Scenes sub-view choice. The store is seeded from settings in
     // loadSettings(); mirror later changes back into pluginSettings so the
@@ -121,6 +131,11 @@ export default class InkwellPlugin extends Plugin {
 
     // Track active file
     activeFile.set(this.app.workspace.getActiveFile());
+    this.registerEvent(
+      this.app.workspace.on("file-open", (file) => {
+        if (file) activeFile.set(file);
+      }),
+    );
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", (leaf) => {
         if (!leaf) return;

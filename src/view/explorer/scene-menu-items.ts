@@ -47,33 +47,35 @@ export const ignoreScene = (fileName: string) => {
   }
 };
 
-export const addAll = () => {
+export const addAll = (fileNames: string[]) => {
   const { index, project } = getSelectedProjectWithIndex();
   if (!project) return;
   if (index >= 0 && project.format === "scenes") {
     projects.update((ps) => {
       const target = ps[index] as MultipleSceneProject;
+      const selected = new Set(fileNames);
       (ps[index] as MultipleSceneProject).scenes = [
         ...target.scenes,
-        ...target.unknownFiles.map((f) => ({ title: f, indent: 0 })),
+        ...target.unknownFiles.filter((f) => selected.has(f)).map((f) => ({ title: f, indent: 0 })),
       ];
-      (ps[index] as MultipleSceneProject).unknownFiles = [];
+      target.unknownFiles = target.unknownFiles.filter((f) => !selected.has(f));
       return ps;
     });
   }
 };
 
-export const ignoreAll = () => {
+export const ignoreAll = (fileNames: string[]) => {
   const { index, project } = getSelectedProjectWithIndex();
   if (!project) return;
   if (index >= 0 && project.format === "scenes") {
     projects.update((ps) => {
       const target = ps[index] as MultipleSceneProject;
+      const selected = new Set(fileNames);
       (ps[index] as MultipleSceneProject).ignoredFiles = [
         ...(target.ignoredFiles ?? []),
-        ...target.unknownFiles,
+        ...target.unknownFiles.filter((f) => selected.has(f)),
       ];
-      (ps[index] as MultipleSceneProject).unknownFiles = [];
+      target.unknownFiles = target.unknownFiles.filter((f) => !selected.has(f));
       return ps;
     });
   }

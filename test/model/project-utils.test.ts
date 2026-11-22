@@ -120,6 +120,34 @@ describe("setProjectFrontmatter (flat v3 schema)", () => {
     expect(fm.othermetadata).toBe("preserved");
   });
 
+  it("writes and clears an optional shared Codex folder", () => {
+    const fm: Record<string, unknown> = {};
+    setProjectFrontmatter(fm, { ...baseMulti, codexFolder: "../Shared Codex" });
+    expect(fm.codexFolder).toBe("../Shared Codex");
+    setProjectFrontmatter(fm, { ...baseMulti, codexFolder: "Reference/Codex" });
+    expect(fm.codexFolder).toBe("./Reference/Codex");
+    setProjectFrontmatter(fm, baseMulti);
+    expect(fm).not.toHaveProperty("codexFolder");
+  });
+
+  it("writes the Chapter preset and calendar settings as optional flat properties", () => {
+    const fm: Record<string, unknown> = {};
+    setProjectFrontmatter(fm, {
+      ...baseMulti,
+      sceneTemplate: "Templates/Inkwell Chapter.md",
+      sceneTemplateMode: "chapter",
+      storyTime: "calendar",
+    });
+    expect(fm).toMatchObject({
+      sceneTemplate: "Templates/Inkwell Chapter.md",
+      sceneTemplateMode: "chapter",
+      storyTime: "calendar",
+    });
+    setProjectFrontmatter(fm, baseMulti);
+    expect(fm).not.toHaveProperty("sceneTemplateMode");
+    expect(fm).not.toHaveProperty("storyTime");
+  });
+
   it("removes `title:` when titleInFrontmatter is false", () => {
     const fm: Record<string, any> = { title: "leftover" };
     setProjectFrontmatter(fm, { ...baseMulti, titleInFrontmatter: false });

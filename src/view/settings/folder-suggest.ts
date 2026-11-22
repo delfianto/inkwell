@@ -26,6 +26,7 @@ export class FolderSuggest extends TextInputSuggest<TFolder> {
         folder instanceof TFolder &&
         folder.path.toLowerCase().contains(lowerCaseInputStr) &&
         (this.relativeRoot === null ||
+          this.relativeRoot === "/" ||
           folder.path === this.relativeRoot ||
           folder.path.startsWith(`${this.relativeRoot}/`))
       ) {
@@ -49,10 +50,11 @@ export class FolderSuggest extends TextInputSuggest<TFolder> {
   }
 
   private withRelativePath(path: string): string {
+    if (this.relativeRoot === "/") return path === "/" ? "." : path;
     if (this.relativeRoot && path.length >= this.relativeRoot.length) {
       let text = path.slice(this.relativeRoot.length);
       text = text.startsWith("/") ? text.slice(1) : text;
-      text = text.length === 0 ? "/" : text;
+      text = text.length === 0 ? "." : text;
       return text;
     }
     return path;

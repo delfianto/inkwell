@@ -6,6 +6,7 @@ import {
   type MultipleSceneProject,
   type Project,
   projects,
+  scenePath,
   selectedProject,
 } from "src/model";
 import {
@@ -81,11 +82,13 @@ export class ExplorerPane extends ItemView {
     });
 
     // Context function for creating new scene notes given a path
-    context.set("onNewScene", async (name: string, open: boolean) => {
-      await insertScene({
+    context.set("onNewScene", (name: string, open: boolean) => {
+      const project = get(selectedProject);
+      if (project?.format !== "scenes") return Promise.resolve(false);
+      return insertScene({
         app: this.app,
         projectsStore: projects,
-        project: get(selectedProject) as MultipleSceneProject,
+        project,
         sceneName: name,
         vault: this.app.vault,
         location: { at: "end", relativeTo: null },
@@ -98,7 +101,10 @@ export class ExplorerPane extends ItemView {
       let sceneName = "Untitled";
       let count = 0;
       const sceneNames = new Set(project.scenes.map((s) => s.title));
-      while (sceneNames.has(sceneName)) {
+      while (
+        sceneNames.has(sceneName) ||
+        this.app.vault.getAbstractFileByPath(scenePath(sceneName, project, this.app.vault))
+      ) {
         count += 1;
         sceneName = `Untitled ${count}`;
       }
