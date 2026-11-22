@@ -19,6 +19,9 @@ export interface SceneStoryDetails {
   finish?: string;
   storyOrder?: number;
   storyWhen?: string;
+  mood: string[];
+  tags: string[];
+  version?: string;
 }
 
 const STORY_KEYS = [
@@ -38,6 +41,9 @@ const STORY_KEYS = [
   "finish",
   "storyOrder",
   "storyWhen",
+  "mood",
+  "tags",
+  "version",
 ] as const satisfies readonly (keyof SceneStoryDetails)[];
 
 function text(value: unknown): string | undefined {
@@ -47,6 +53,13 @@ function text(value: unknown): string | undefined {
 function textList(value: unknown): string[] {
   const items = Array.isArray(value) ? value : [value];
   return items.map((item) => text(item)).filter((item): item is string => item !== undefined);
+}
+
+function readTags(value: unknown): string[] {
+  const tags = typeof value === "string" ? value.split(/[\s,]+/u) : value;
+  return textList(tags)
+    .map((tag) => tag.replace(/^#/u, ""))
+    .filter(Boolean);
 }
 
 function number(value: unknown): number | undefined {
@@ -81,6 +94,9 @@ export function readSceneStory(properties: Record<string, unknown> = {}): SceneS
     finish: readStoryDateTime(properties.finish),
     storyOrder: number(properties.storyOrder),
     storyWhen: text(properties.storyWhen),
+    mood: textList(properties.mood),
+    tags: readTags(properties.tags),
+    version: text(properties.version) ?? number(properties.version)?.toString(),
   };
 }
 

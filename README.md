@@ -15,8 +15,8 @@ This is a personal project, built to scratch my own writing setup and maintained
 ## What it does
 
 - **Organise a manuscript.** Create a multi-scene project or a single-note project. List, Cards, and Outline show the order and nesting from `Index.md`, with scene titles, status, and word counts. Cards also show the subtitle and summary when present.
-- **Track the story.** Edit chapter metadata, POV, cast, locations, and timing in the tabbed **Scene details** dialog. The **Codex** links to ordinary Markdown character and location notes and lists their scenes in manuscript order.
-- **See when things happen.** Open **Timeline** from the Scenes view menu and choose **Manuscript order**, **Story order**, or **Start date**. Filter by character or location.
+- **Track the story.** Edit chapter notes, Draft or Complete status, POV, cast, locations, timing, mood, tags, and version in **Scene details**. The **Codex** links to ordinary Markdown character and location notes and lists their scenes in manuscript order.
+- **See when things happen.** Open **Timeline** from the Scenes view menu and choose **Manuscript order**, **Story order**, or **Start date**. Use **Filter** to search for a character or location and see its scenes.
 - **Start chapters with a preset.** The vault-wide Chapter preset adds editable YAML defaults and fills the title when you create a scene. [Chapter preset guide](./docs/interface.md#chapter-preset)
 - **Compile the manuscript.** Open the Compile builder at the bottom of **Project** on desktop. Configure reusable workflows and preview scene steps before running them. eBook metadata lives in the project frontmatter for compile steps to use. [Compile builder guide](./docs/interface.md#the-compile-builder)
 
@@ -123,7 +123,7 @@ BRAT pulls the release assets into `.obsidian/plugins/inkwell/`, enables the plu
 1. In **Settings → Inkwell**, set **Writing projects folder** to choose the default destination for new projects. The project picker discovers projects throughout the vault.
 2. Use **New project** in the Inkwell sidebar. Choose a project type and title. **Change folder** sets the destination for this project.
 3. In a multi-scene project, use **New scene** in the sidebar. For structured chapter notes, first choose **Settings → Inkwell → Scene template → Use Chapter preset**. Use the edit button to customise `Templates/Inkwell Chapter.md`. A selected vault-wide template takes precedence over an older project's template setting.
-4. Create character and location notes in **Codex**, open a scene, and link its cast and locations in **Scene details**. Use the **Timing** tab to place it on the Timeline.
+4. Create character and location notes in **Codex**, then open a scene and link them from **Scene details → People & places**. Use **Timing** to place the scene on the Timeline and **Properties** for mood, tags, and version. The arrows beside the scene title let you browse neighboring scenes within the dialog.
 
 For screenshots and step-by-step controls, see the [Interface guide](./docs/interface.md).
 

@@ -75,25 +75,35 @@ templating plugins disabled. Choose a custom template from the vault's
 When a global template is selected it is used for new scenes across projects.
 An older project's configured template is used when the global setting is clear.
 
-In **Scene details**, the **Chapter** tab holds the title, subtitle, arc, chapter
-number, status, context, and summary. **People and places** holds POV style,
-the focal character, cast, and locations. **Timing** holds dates and story
-order. Switch tabs as you edit, then use **Save scene details** to save the
-changes together. Use Obsidian Properties for the other fields, including mood, version,
-and tags. Saving Scene details refreshes `updated` on notes that include it.
-The Previous chapter and Next chapter buttons follow the order in the project
-index.
-
 ## Codex and scene details
+
+Open **Scene details** from the Scenes toolbar while a scene is active.
+
+| Tab | What you edit |
+|---|---|
+| **Chapter** | Title, subtitle, arc, chapter number, Draft or Complete status, summary, and context |
+| **People & places** | POV style, POV character, cast, and locations |
+| **Timing** | Start, finish, weekday, manual story order, and a free-text time label |
+| **Properties** | Mood, tags, and version |
+
+Add mood values and tags with **Add** or Enter. **Save changes** saves edits
+across all tabs, including any mood value or tag still in the input, and
+refreshes `updated` on notes that include it. Closing the dialog with pending
+edits asks whether to discard them. When the form has no pending edits, the
+arrows beside the scene title load the previous or next scene's properties in
+manuscript order. The dialog stays on the same tab and keeps the active note in
+place. **Save changes** updates the scene shown in the dialog and closes it.
+Use Obsidian Properties for fields outside this dialog.
 
 Choose **Codex → Characters** or **Locations** to browse your reference notes
 or create one. Pick an entry to see its scenes in manuscript order, or select
 **Open note** to edit its Markdown.
 
-From **Scenes**, open a scene and click **Scene details**. Use the note pickers
-to set its point of view, cast, and location, then save. Reopen Scene details
-and click an assigned name to jump to its Codex entry. Each scene appears once
-per entry even when a character is assigned as both POV and cast.
+From **Scenes**, open a scene and choose **Scene details → People & places**.
+Use the note pickers to set its point of view, cast, and locations, then save.
+Reopen Scene details and click an assigned name to jump to its Codex entry.
+Each scene appears once per entry even when a character is assigned as both
+POV and cast.
 
 New projects have a `Codex/` folder beside the index with `Assets/`,
 `Locations/`, `Characters/`, and `Timeline/` subfolders.
@@ -103,12 +113,16 @@ Each draft lists appearances from its own manuscript.
 
 ## Timeline
 
-Choose **Timeline** in the Scenes view menu. **Manuscript order** follows your
-project index. **Story order** uses the manual number from Scene details, and
-**Start date** uses `start` and displays the range through `finish` when set. Entering a start
-date in Scene details also fills the weekday. Ties follow manuscript order,
-and scenes missing the chosen sort value appear under **Unplaced**.
-Use the character or location filter to follow their scenes.
+Choose **Timeline** in the Scenes view menu. The order button shows the active
+sort. **Manuscript order** follows your project index, **Story order** uses
+the manual number from Scene details, and **Start date** uses `start` and
+displays the range through `finish` when set. Entering a start date in Scene
+details also fills the weekday. Ties follow manuscript order, and scenes
+missing the chosen sort value appear under **Unplaced**.
+
+Use **Filter** to search for a character or location and see the scenes that
+link to it. The selected name appears below the controls. Use the **×** beside
+it to show all scenes again.
 
 The Timeline reads the YAML of scenes in the project index. The
 `Codex/Timeline/` folder is available for separate story reference notes.
@@ -116,8 +130,10 @@ Compiling follows manuscript order.
 
 ## Scene status colours
 
-Give any scene a `status:` value in its frontmatter and Inkwell renders a
-colour-coded dot and label wherever that scene appears:
+Choose **Draft** or **Complete** in **Scene details → Chapter**. Inkwell saves
+the choice to `status` in the scene's frontmatter and displays a colour-coded
+dot and label. Existing status values stay in place until you choose a new
+status. Older values such as `revising` and `scrap` keep their colours.
 
 | `status:` | Colour | Meaning |
 |---|---|---|

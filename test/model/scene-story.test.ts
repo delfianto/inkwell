@@ -59,6 +59,48 @@ describe("scene details", () => {
     expect(properties).toEqual({ storyOrder: 20 });
   });
 
+  it("normalizes edited chapter properties while preserving the types of untouched fields", async () => {
+    const properties: Record<string, unknown> = {
+      mood: "Quiet",
+      tags: "#Chapter/WAFF-K01, book",
+      version: 1,
+      prev: "[[Opening]]",
+      custom: { continuity: "keep" },
+    };
+    const original = readSceneStory(properties);
+    expect(original.mood).toEqual(["Quiet"]);
+    expect(original.tags).toEqual(["Chapter/WAFF-K01", "book"]);
+    expect(original.version).toBe("1");
+
+    await saveSceneStory(appForProperties(properties), new TFile(), original, {
+      ...original,
+      mood: ["Quiet", "Warm"],
+      tags: ["Chapter/WAFF-K01"],
+    });
+    expect(properties).toEqual({
+      mood: ["Quiet", "Warm"],
+      tags: ["Chapter/WAFF-K01"],
+      version: 1,
+      prev: "[[Opening]]",
+      custom: { continuity: "keep" },
+    });
+  });
+
+  it("rejects conflicting chapter property edits without overwriting other fields", async () => {
+    const properties = { version: "1.0.1", tags: ["Chapter"] };
+    const original = readSceneStory(properties);
+    properties.version = "1.0.2";
+
+    await expect(
+      saveSceneStory(appForProperties(properties), new TFile(), original, {
+        ...original,
+        version: "1.0.3",
+        tags: ["Chapter/WAFF-K01"],
+      }),
+    ).rejects.toThrow("These scene details changed elsewhere");
+    expect(properties).toEqual({ version: "1.0.2", tags: ["Chapter"] });
+  });
+
   it("counts one appearance per resolved file, even when the POV is in the cast", () => {
     const app = {
       metadataCache: {

@@ -51,7 +51,7 @@
 <div class="inkwell-toolbar">
   <button
     type="button"
-    class="scene-action scene-view"
+    class="inkwell-scene-action scene-view"
     title="Scene view"
     aria-label="Scene view, {viewLabel}"
     aria-haspopup="menu"
@@ -63,7 +63,7 @@
   </button>
   <button
     type="button"
-    class="scene-action scene-details"
+    class="inkwell-scene-action scene-details"
     disabled={!activeScenePath}
     aria-label="Scene details"
     title={activeScenePath ? "Scene details" : "Open a scene to edit its details"}
@@ -75,7 +75,7 @@
   </button>
   <button
     type="button"
-    class="scene-action"
+    class="inkwell-scene-action"
     title="New scene"
     aria-label="New scene"
     onclick={() => newSceneFieldVisible.set(true)}
@@ -94,38 +94,6 @@
     padding: var(--size-4-2);
     flex-shrink: 0;
     container-type: inline-size;
-    --inkwell-action-size: max(32px, var(--input-height, 30px));
-  }
-
-  .scene-action {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--size-4-1);
-    flex-shrink: 0;
-    height: var(--inkwell-action-size);
-    min-width: var(--inkwell-action-size);
-    padding-inline: var(--size-4-2);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: var(--radius-s);
-    background: var(--interactive-normal);
-    box-shadow: none;
-    font-size: var(--font-ui-smaller);
-    white-space: nowrap;
-  }
-
-  .scene-action:hover:not(:disabled), .scene-action[aria-expanded="true"] {
-    background: var(--interactive-hover);
-  }
-
-  .scene-action:focus-visible {
-    outline: 2px solid var(--interactive-accent);
-    outline-offset: -2px;
-  }
-
-  .scene-action :global(svg) {
-    width: var(--icon-s);
-    height: var(--icon-s);
   }
 
   .scene-view {
@@ -144,7 +112,7 @@
   }
 
   @container (min-width: 220px) {
-    .scene-action {
+    .inkwell-scene-action {
       padding-inline: var(--size-4-1);
     }
 
@@ -158,7 +126,7 @@
   }
 
   @container (min-width: 310px) {
-    .scene-action {
+    .inkwell-scene-action {
       padding-inline: var(--size-4-2);
     }
   }
@@ -180,12 +148,6 @@
 
     .details-icon {
       display: flex;
-    }
-  }
-
-  @media (pointer: coarse) {
-    .inkwell-toolbar {
-      --inkwell-action-size: max(40px, var(--input-height, 30px));
     }
   }
 </style>

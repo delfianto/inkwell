@@ -46,8 +46,10 @@ and the [interface guide](./docs/interface.md) describes the writing workflow.
   vault-level `Templates/` folder. Its configured path takes precedence over a
   legacy project template. Keep the Chapter preset's title autofill and YAML
   handling independent of Obsidian's templating plugins.
-- Scene details stores scene metadata in the note's frontmatter. Preserve the
-  prose and unrelated properties when editing fields. Read legacy linked
+- Scene details stores chapter notes, references, timing, mood, tags, and
+  version in the note's frontmatter. Save edited fields across tabs together.
+  Preserve the prose and unrelated properties, and check for conflicting
+  edits before writing. Read legacy linked
   `pov` and singular `location` alongside the current `povCharacter` and
   `locations` fields. Resolve Codex references with Obsidian's link resolver.
 - Timeline derives its rows from indexed scene notes. Calendar order uses
