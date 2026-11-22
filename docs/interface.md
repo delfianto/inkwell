@@ -99,6 +99,28 @@ Choose **Codex → Characters** or **Locations** to browse your reference notes
 or create one. Pick an entry to see its scenes in manuscript order, or select
 **Open note** to edit its Markdown.
 
+Choose **Edit entry** for a form based on the note (Obsidian 1.5.7 or later).
+**Properties** shows controls
+for text, numbers, checkboxes, dates and times, and lists of those values.
+Use **Find a property** to search across groups and **Add property** to choose
+a key and type. Formatted text and list items render as Markdown. Use the
+pencil to edit the source text. Structured YAML values can be edited from
+**Open note**.
+When a compatible Advanced Infobox plugin is enabled, the editor uses its
+resolved labels, order, and groups from the note's first infobox block or
+template. Additional properties stay accessible.
+
+**Lore** uses the note's headings as a section picker. Nested sections show
+their parent names, such as **Biography › Childhood**. The tab opens to the
+first section with text. A heading that only groups subsections shows links
+to them and an **Add introduction** button. Use **Edit** and **Preview** to
+switch between Markdown source and the rendered draft for the selected
+section. The dialog preserves infobox configuration blocks and
+keeps drafts as you switch sections and tabs. **Save changes** writes both
+tabs to the same note in one operation. Property edits reserialize the YAML
+header, which can change formatting and remove YAML comments. If the note
+changed elsewhere, the dialog keeps the draft and reports the conflict.
+
 From **Scenes**, open a scene and choose **Scene details → People & places**.
 Use the note pickers to set its point of view, cast, and locations, then save.
 Reopen Scene details and click an assigned name to jump to its Codex entry.

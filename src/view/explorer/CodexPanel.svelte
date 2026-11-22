@@ -1,7 +1,8 @@
 <script lang="ts">
   import { CODEX_CATEGORIES, CODEX_KINDS, codexFolderPath, type CodexKind, ensureCodexFolders } from "src/model/codex";
   import { getContext, onMount } from "svelte";
-  import { Keymap, type PaneType } from "obsidian";
+  import { Keymap, type PaneType, TFile } from "obsidian";
+  import { CodexEditorModal } from "../modals/CodexEditorModal";
   import { CreateCodexEntryModal } from "../modals/CreateCodexEntryModal";
   import Icon from "../components/Icon.svelte";
   import { type MultipleSceneProject } from "src/model/types";
@@ -44,6 +45,12 @@
       openFile(file.path, false);
     }).open();
   }
+
+  function editEntry() {
+    if (!entry) return;
+    const file = app.vault.getAbstractFileByPath(entry.path);
+    if (file instanceof TFile) new CodexEditorModal(app, file, entry.title).open();
+  }
 </script>
 
 <div class="codex">
@@ -57,7 +64,10 @@
         <Icon iconName="arrow-left" />
         {CODEX_CATEGORIES[entry.kind].label}
       </button>
-      <button type="button" onclick={(event) => openFile(entry.path, Keymap.isModEvent(event))}>Open note</button>
+      <div class="entry-actions">
+        <button type="button" onclick={(event) => openFile(entry.path, Keymap.isModEvent(event))}>Open note</button>
+        <button type="button" onclick={editEntry}>Edit entry</button>
+      </div>
     </div>
     <h3>{entry.title}</h3>
     {#if entry.qualifier}<p class="muted">{entry.qualifier}</p>{/if}
@@ -116,7 +126,7 @@
     padding-top: var(--size-4-1);
   }
 
-  .codex-categories, .codex-actions {
+  .codex-categories, .codex-actions, .entry-actions {
     display: flex;
     gap: var(--size-4-1);
     align-items: center;
@@ -136,6 +146,10 @@
 
   .codex-actions {
     justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .entry-actions {
     flex-wrap: wrap;
   }
 

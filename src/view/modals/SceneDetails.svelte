@@ -443,7 +443,7 @@
     align-items: end;
     justify-content: space-between;
     gap: var(--size-4-3);
-    padding: 0 var(--scene-details-padding) var(--size-4-4);
+    padding: 0 var(--inkwell-editor-padding) var(--size-4-4);
   }
 
   .scene-identity {
@@ -495,7 +495,7 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--size-2-2);
-    padding: var(--size-4-2) var(--scene-details-padding);
+    padding: var(--size-4-2) var(--inkwell-editor-padding);
     background: var(--background-secondary);
     border-bottom: 1px solid var(--background-modifier-border);
   }
@@ -565,7 +565,7 @@
   .scene-panel {
     overflow: auto;
     overscroll-behavior: contain;
-    padding: var(--size-4-5) var(--scene-details-padding);
+    padding: var(--size-4-5) var(--inkwell-editor-padding);
   }
 
   .scene-panel[hidden] {
@@ -744,7 +744,7 @@
   .scene-footer {
     display: grid;
     gap: var(--size-4-2);
-    padding: var(--size-4-3) var(--scene-details-padding);
+    padding: var(--size-4-3) var(--inkwell-editor-padding);
   }
 
   .footer-row {

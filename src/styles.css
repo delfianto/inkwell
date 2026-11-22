@@ -198,8 +198,8 @@ body.inkwell-classic-scrollbars .inkwell-explorer .tab-panel-container::-webkit-
   width: min(680px, 92vw);
 }
 
-.modal.inkwell-scene-details-modal {
-  --scene-details-padding: clamp(14px, 3vw, 26px);
+.modal:is(.inkwell-scene-details-modal, .inkwell-codex-edit-modal) {
+  --inkwell-editor-padding: clamp(14px, 3vw, 26px);
   display: flex;
   flex-direction: column;
   width: min(860px, 94vw);
@@ -210,21 +210,25 @@ body.inkwell-classic-scrollbars .inkwell-explorer .tab-panel-container::-webkit-
   overflow: hidden;
 }
 
-.modal.inkwell-scene-details-modal .modal-title {
+.modal:is(.inkwell-scene-details-modal, .inkwell-codex-edit-modal) .modal-title {
   margin: 0;
-  padding: var(--size-4-4) var(--scene-details-padding) var(--size-4-1);
+  padding: var(--size-4-4) var(--inkwell-editor-padding) var(--size-4-1);
   color: var(--text-muted);
   font-size: var(--font-ui-small);
   font-weight: var(--font-medium);
 }
 
-.modal.inkwell-scene-details-modal .modal-content {
+.modal:is(.inkwell-scene-details-modal, .inkwell-codex-edit-modal) .modal-content {
   display: flex;
   flex: 1;
   min-height: 0;
   margin: 0;
   padding: 0;
   overflow: hidden;
+}
+
+.inkwell-codex-load-status {
+  padding-inline: var(--inkwell-editor-padding);
 }
 
 .inkwell-settings-user-steps {

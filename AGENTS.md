@@ -26,6 +26,7 @@ and the [interface guide](./docs/interface.md) describes the writing workflow.
 | Project discovery, index reads and writes, and scene paths | `src/model/project-store-sync.ts`, `src/model/project-utils.ts`, `src/model/scene-navigation.ts` |
 | Chapter template and scene properties | `src/model/chapter-template.ts`, `src/model/scene-story.ts`, `src/model/story-time.ts` |
 | Codex folders and entries | `src/model/codex.ts`, `src/view/explorer/CodexPanel.svelte` |
+| Codex editor | `src/model/codex-note.ts`, `src/model/codex-properties.ts`, `src/model/codex-lore.ts`, `src/view/modals/CodexEditor.svelte` |
 | Sidebar, Timeline, and Scene details | `src/view/explorer/`, `src/view/modals/SceneDetails.svelte` |
 | Compile pipeline, workflow storage, and builder | `src/compile/`, `src/model/workflow-storage.ts`, `src/view/compile/` |
 
@@ -52,6 +53,10 @@ and the [interface guide](./docs/interface.md) describes the writing workflow.
   edits before writing. Read legacy linked
   `pov` and singular `location` alongside the current `povCharacter` and
   `locations` fields. Resolve Codex references with Obsidian's link resolver.
+- The Codex editor builds fields from the selected note and optionally uses
+  Advanced Infobox's `getEditorLayout` for labels and groups. Keep property and
+  prose edits in one conflict-checked write. Protect infobox fences when
+  replacing lore sections.
 - Timeline derives its rows from indexed scene notes. Calendar order uses
   `start` and displays `finish` when available. Manual story order uses
   `storyOrder`. `Codex/Timeline/` is a reference folder for the writer. Compile
