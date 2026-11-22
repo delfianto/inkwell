@@ -12,16 +12,13 @@ This is a personal project, built to scratch my own writing setup and maintained
 > [!CAUTION]
 > Inkwell uses an `Index.md` frontmatter schema that is **incompatible** with upstream Longform's. There is **no automated migration**. Projects authored against upstream Longform need a one-time hand-edit. See [Migrating](#migrating) below.
 
-## What it is
+## What it does
 
-- Modernized stack: [Bun](https://bun.com), [Vite+](https://voidzero.dev) (alpha) as a unified toolchain, Svelte 5 (runes), TypeScript 6. Zero runtime dependencies beyond Popper and SortableJS (lodash was dropped in favor of native JS).
-- **Flat frontmatter schema** — every project key lives at the top level of `Index.md` so Obsidian's Properties UI can edit it without flattening or losing structure.
-- **eBook metadata first-class** — `author`, `language`, `identifier`, `description`, `cover`, `publisher`, `pubdate`, `rights`, `subjects`, `series`, `seriesIndex` live alongside `title` / `workflow` / `scenes`. An EPUB-producing compile step can read them directly; no sidecar file.
-- **Scene display labels** — the Scenes tab uses each scene file's `frontmatter.title` as its row label (live-updating), falling back to the filename. Lets you name files concisely (`ch01-s02.md`) while displaying a friendlier title.
-- **Codex and timeline** — multi-scene projects can link scenes to Markdown character and location notes. Browse each entry's appearances and switch between manuscript order and story order in the Scenes tab.
-- **Chapter preset** — create chapters with editable YAML defaults, a title filled from scene creation, and a Timeline that can sort by start date. See [Chapter preset](./docs/interface.md#chapter-preset).
-- **Redesigned interface** — nearly every writing surface was reimplemented: three Scenes views (List / Cards / Outline) with colour-coded status and per-scene word counts, a lean Project tab, an eBook metadata modal, an action-first New Project modal, and a full-pane Compile builder. See [A redesigned interface](#a-redesigned-interface).
-- The full Longform workflow is intact underneath: a sidebar pane, reorderable nested scene list, per-project/per-scene word counts, compile workflows, single-scene and multi-scene projects, and multiple drafts grouped by title. Writing-session goals and the status-bar word count have been removed — Obsidian's built-in word-count statistic covers the latter.
+- **Organise a manuscript.** Create a multi-scene project or a single-note project. List, Cards, and Outline show the order and nesting from `Index.md`, with scene titles, status, and word counts. Cards also show the subtitle and summary when present.
+- **Track the story.** Edit chapter metadata, POV, cast, locations, and timing in the tabbed **Scene details** dialog. The **Codex** links to ordinary Markdown character and location notes and lists their scenes in manuscript order.
+- **See when things happen.** Open **Timeline** from the Scenes view menu and choose **Manuscript order**, **Story order**, or **Start date**. Filter by character or location.
+- **Start chapters with a preset.** The vault-wide Chapter preset adds editable YAML defaults and fills the title when you create a scene. [Chapter preset guide](./docs/interface.md#chapter-preset)
+- **Compile the manuscript.** Open the Compile builder at the bottom of **Project** on desktop. Configure reusable workflows and preview scene steps before running them. eBook metadata lives in the project frontmatter for compile steps to use. [Compile builder guide](./docs/interface.md#the-compile-builder)
 
 Because Inkwell uses its own plugin id (`inkwell`), it can be installed alongside upstream Longform without conflict.
 
@@ -35,7 +32,7 @@ The UI Inkwell inherited from Longform worked but had never had a design pass. `
     <td width="66%" valign="top"><img src="docs/images/compile-builder.png" alt="Compile builder"></td>
   </tr>
   <tr>
-    <td valign="top"><b>Scenes</b> — List / Cards / Outline views with colour-coded status, per-scene word counts, and collapsible acts.</td>
+    <td valign="top"><b>Scenes</b> — manuscript views with colour-coded status, per-scene word counts, and collapsible acts.</td>
     <td valign="top"><b>Compile</b> — a full-pane builder: one-line steps with colour-coded kinds on the left, config + live preview on the right, Run always in reach.</td>
   </tr>
 </table>
@@ -50,9 +47,9 @@ There's also a lean Project tab, a wide **eBook metadata modal**, and an action-
 | Area | Upstream Longform `2.x` | Inkwell |
 |---|---|---|
 | Discriminator | Nested `longform:` object with `format:` inside | Top-level `inkwell: scenes` or `inkwell: single` |
-| Project keys | Nested under `longform.*` | Top-level — `title`, `workflow`, `sceneFolder`, `scenes`, `ignoredFiles`, `sceneTemplate` |
+| Project keys | Nested under `longform.*` | Flat properties such as `title`, `workflow`, `sceneFolder`, `codexFolder`, `scenes`, and `ignoredFiles` |
 | Scene hierarchy | Nested YAML arrays (`- - second scene`) | Flat array with `> ` prefix tokens (`"> second scene"`) — round-trips safely through Obsidian's Properties UI |
-| eBook metadata | Not handled; users keep a sidecar file | First-class top-level keys (see above), edited through a dedicated **eBook metadata modal** (grouped Identity / Publication / Classification, subject chips, cover thumbnail, Generate-UUID) launched from the Project tab |
+| eBook metadata | Stored separately by the writer | Top-level keys such as `author`, `language`, `identifier`, `cover`, and `subjects`, edited through the **eBook metadata** button in Project |
 | Scene display label | Filename only | `frontmatter.title` of each scene file, falling back to filename |
 | Migration | Plugin runs a migration on first launch | **None.** Files using the legacy nested form are silently ignored. |
 
@@ -123,35 +120,64 @@ BRAT pulls the release assets into `.obsidian/plugins/inkwell/`, enables the plu
 
 ## Getting started
 
-The **[Interface guide](./docs/interface.md)** is the visual walkthrough — creating a project, the three Scenes views, scene status colours, the Project tab, the eBook modal, and the Compile builder. Inkwell's UI is a ground-up reimplementation, so upstream Longform's walkthrough no longer matches; the on-disk `Index.md` schema (covered above) is the other practical difference.
+1. In **Settings → Inkwell**, set **Writing projects folder** to choose the default destination for new projects. The project picker discovers projects throughout the vault.
+2. Use **New project** in the Inkwell sidebar. Choose a project type and title. **Change folder** sets the destination for this project.
+3. In a multi-scene project, use **New scene** in the sidebar. For structured chapter notes, first choose **Settings → Inkwell → Scene template → Use Chapter preset**. Use the edit button to customise `Templates/Inkwell Chapter.md`. A selected vault-wide template takes precedence over an older project's template setting.
+4. Create character and location notes in **Codex**, open a scene, and link its cast and locations in **Scene details**. Use the **Timing** tab to place it on the Timeline.
+
+For screenshots and step-by-step controls, see the [Interface guide](./docs/interface.md).
+
+### Vault layout
+
+With `Writing/` selected as the writing projects folder, a new multi-scene project called *StoryA* uses this layout. Inkwell creates the chapter preset in the vault-level `Templates/` folder when enabled.
+
+```text
+Templates/
+  Inkwell Chapter.md
+Writing/
+  StoryA/
+    Index.md
+    Scenes/
+    Codex/
+      Assets/
+      Characters/
+      Locations/
+      Timeline/
+```
+
+**Project → Scene folder** and **Codex folder** resolve from the directory containing `Index.md`. New indexes store `sceneFolder: Scenes` and `codexFolder: ./Codex`. The leading `./` identifies a project-relative Codex path. Inkwell also reads older vault-relative Codex paths, and a scene folder of `/` refers to the project directory itself.
+
+### What lives in YAML
+
+`Index.md` records which scenes belong to the manuscript, their order and nesting, the project folders, eBook metadata, and the compile workflow. Scene-specific properties live in each scene note. The Timeline sorts by `start` in calendar order and shows `finish` when present. Manual story order uses `storyOrder`. The `pov` field holds the narrative style, and `povCharacter`, `characters`, and `locations` link to Codex notes.
+
+The `Codex/Timeline/` directory is available for reference notes. The current Timeline view displays indexed scenes. Compile reads manuscript order from `Index.md`.
 
 ## Stack
 
 | Layer | Tool |
 |---|---|
-| Runtime / package manager | [Bun](https://bun.com) |
-| Build / lint / format / test / type-aware lint | [Vite+](https://voidzero.dev) (alpha) — `vp build`, `vp test`, `vp check`, `vp lint`, `vp fmt` |
+| Runtime / package manager | Bun, pinned in `.tool-versions` |
+| Build / lint / format / test | Vite+ through the scripts in `package.json` |
 | UI framework | Svelte 5 (runes mode) |
-| Type-checking | `tsc --noEmit` (TypeScript 6.x) + `svelte-check` (kept until Vite+ adds Svelte type-check coverage) |
+| Type-checking | TypeScript 6, using `tsc --noEmit` and `svelte-check` |
 
-`vite` isn't declared as a devDependency — it resolves to Vite+'s vendored build via a `package.json` `override`. `vitest` (`4.1.10`) is a normal devDependency, pinned to the version Vite+ bundles.
-
-Type-checking stays on the TypeScript **6.x** line: TypeScript 7 is the Go rewrite and no longer exposes the JS compiler API that `svelte-check` (and most editor tooling) relies on, so it can't type-check `.svelte` files yet. Inkwell will move to native TS7 once `svelte-check` supports it.
+`vite` is aliased to `@voidzero-dev/vite-plus-core`. The test suite imports from `vite-plus/test` and runs with `vp test run`.
 
 ## Development
 
 ```sh
-bun install          # one-time
-bun run dev          # watch build into test-vault-inkwell/.obsidian/plugins/inkwell
-bun run build        # production build → ./dist (main.js, styles.css, manifest.json)
-bun run test         # vp test run (vitest)
-bun run type-check   # tsc + svelte-check
-bun run check        # vp check (format + lint)
-bun run lint:fix     # autofix lint
-bun run format       # autofix formatting
+bun install --frozen-lockfile
+bun run check        # format check and lint
+bun run type-check   # TypeScript and Svelte
+bun run test
+bun run build        # production build in dist/
+bun run dev          # watch build into an Obsidian plugin directory
 ```
 
-Release artifacts after `bun run build` live in `./dist/`. Zip the three files there for a GitHub release; users drop them into `.obsidian/plugins/inkwell/`.
+`bun run build` writes `main.js`, `styles.css`, and `manifest.json` to `dist/`. Use those files for a manual install or symlink the `dist/` directory to your vault's `.obsidian/plugins/inkwell/`.
+
+Watch mode writes to `test-vault-inkwell/.obsidian/plugins/inkwell/` by default. Set `PLUGINS_DIR` to a vault's `.obsidian/plugins/` directory to build directly there. [Environment example](./.envrc.example) · [Repository guide](./AGENTS.md)
 
 ## Scene-only styling
 
